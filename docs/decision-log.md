@@ -18,18 +18,20 @@ implemented (see ADR-002 discussion in [`README.md`](../README.md)).
 
 ---
 
-## ADR-002: Use `auth.veloso.dev` as the primary hostname
+## ADR-002: Prefer an `auth.` subdomain over `sso.`
 
-**Context:** Needed to pick between `auth.veloso.dev` and `sso.veloso.dev`.
+**Context:** This repo doesn't own or assume any particular domain — the operator sets their own
+hostname via `SSO_DOMAIN`/`SSO_EXTERNAL_URL`. Still needed a recommended subdomain *label*
+pattern to put in the docs and examples (illustrated here as `auth.example.com`).
 
-**Decision:** Use `auth.veloso.dev` as the preferred hostname; document `sso.veloso.dev` as an
-acceptable alternative.
+**Decision:** Recommend an `auth.<yourdomain>` label as the default pattern; document
+`sso.<yourdomain>` as an acceptable alternative label.
 
-**Consequences:** `auth.` is broader and more future-proof — it reads naturally for
+**Consequences:** `auth.` is broader and more future-proof than `sso.` — it reads naturally for
 authentication, SSO, OIDC, OAuth2, MFA, an app portal, reverse-proxy protection, and future
-identity services, without implying the system is *only* an SSO layer. `sso.systemsnotsilos.com`
-is explicitly not used as the default; that domain is reserved for public-facing/business
-identity, while `veloso.dev` is the private developer infrastructure domain.
+identity services, without implying the system is *only* an SSO layer. This is a naming
+recommendation only; the actual domain is entirely the operator's choice and is never hardcoded
+in this repo (see [`docs/reverse-proxy-domain.md`](reverse-proxy-domain.md)).
 
 ---
 
@@ -107,7 +109,8 @@ authentik web service is exposed, and only to `SSO_BIND_HOST:SSO_HTTP_PORT`.
 **Context:** Public exposure of an identity provider carries outsized risk if misconfigured.
 
 **Decision:** MVP defaults to `DEPLOY_MODE=local_only` and `PUBLIC_EXPOSURE=false`. Public exposure
-via `auth.veloso.dev` is a deliberate, later, deployer-driven step (Phase 2+).
+via the operator's chosen `SSO_DOMAIN` (e.g. `auth.example.com`) is a deliberate, later,
+deployer-driven step (Phase 2+).
 
 **Consequences:** Gives time to validate authentik configuration, backups, and MFA before the
 service is internet-reachable.
