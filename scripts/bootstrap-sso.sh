@@ -29,9 +29,13 @@ echo "== Step 2/3: start Docker Compose =="
 docker compose up -d
 
 echo "== Step 3/3: wait for authentik-server to respond =="
-BASE_URL="http://${SSO_BIND_HOST:-localhost}:${SSO_HTTP_PORT:-9000}"
+# 0.0.0.0 means "listen on all interfaces" — it isn't itself a reachable
+# address to curl, so probe localhost in that case instead.
+SSO_HTTP_PORT="${SSO_HTTP_PORT:-9000}"
 if [[ "${SSO_BIND_HOST:-0.0.0.0}" == "0.0.0.0" ]]; then
-  BASE_URL="http://localhost:${SSO_HTTP_PORT:-9000}"
+  BASE_URL="http://localhost:${SSO_HTTP_PORT}"
+else
+  BASE_URL="http://${SSO_BIND_HOST}:${SSO_HTTP_PORT}"
 fi
 
 ATTEMPTS=30
