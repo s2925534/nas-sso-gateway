@@ -3,7 +3,7 @@
 Self-hosted Single Sign-On (SSO) gateway for NAS-hosted web apps, built on
 [authentik](https://goauthentik.io/), Docker, OIDC, and reverse-proxy/forward-auth patterns.
 
-**Recommended hostname:** `auth.veloso.dev`
+**Recommended hostname:** `auth.example.com`
 
 ## What This Project Does
 
@@ -81,7 +81,7 @@ line — public hostname, TLS, tunnel — is owned by `../synology-site-deployer
 
 ## Deployer-Managed Domain
 
-Public exposure of `auth.veloso.dev` (DNS, Cloudflare Tunnel or Traefik, certificates) is handled
+Public exposure of `auth.example.com` (DNS, Cloudflare Tunnel or Traefik, certificates) is handled
 entirely by `../synology-site-deployer`. This repo only needs to expose authentik's web port on
 the configured bind host/port; see [`docs/deployer-integration.md`](docs/deployer-integration.md)
 and [`docs/reverse-proxy-domain.md`](docs/reverse-proxy-domain.md).
