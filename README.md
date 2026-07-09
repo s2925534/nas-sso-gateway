@@ -129,6 +129,9 @@ Full breakdown: [`docs/phase-plan.md`](docs/phase-plan.md) and [`TODO.md`](TODO.
 - [`docs/proxy-auth-integration.md`](docs/proxy-auth-integration.md) — forward-auth integration reference
 - [`docs/troubleshooting.md`](docs/troubleshooting.md) — common problems and fixes
 - [`docs/future-flags.md`](docs/future-flags.md) — planned feature flags
+- [`docs/first-sso-configuration.md`](docs/first-sso-configuration.md) — Phase 3 hands-on configuration walkthrough
+- [`docs/multi-app-rollout.md`](docs/multi-app-rollout.md) — Phase 5 onboarding checklist and naming convention
+- [`docs/security-hardening.md`](docs/security-hardening.md) — Phase 6 hardening procedures
 
 ## License
 

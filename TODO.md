@@ -37,24 +37,35 @@ full description of each phase.
 
 ## Phase 2: Deployer Integration Readiness
 
-- [ ] Document how `../synology-site-deployer` should consume this repo
-- [ ] Add deployer metadata if useful
-- [ ] Confirm deployer-managed persistent path expectation
-- [ ] Confirm deployer-managed Cloudflare/domain expectation
-- [ ] Confirm deployer exposes only authentik web endpoint
-- [ ] Avoid direct Cloudflare implementation in this repo
+- [x] Document how `../synology-site-deployer` should consume this repo
+- [x] Add deployer metadata if useful — investigated the deployer's `deploy` command source; it reads no manifest/metadata file from a target project (CLI flags only), so a metadata file would be inert. Documented the actual `synology-site deploy` invocation (flags, and an authentik-specific `--health-path` caveat) in `docs/deployer-integration.md` instead.
+- [x] Confirm deployer-managed persistent path expectation
+- [x] Confirm deployer-managed Cloudflare/domain expectation
+- [x] Confirm deployer exposes only authentik web endpoint
+- [x] Avoid direct Cloudflare implementation in this repo (confirmed — no Cloudflare code/deps anywhere in this repo)
 
 ## Phase 3: First SSO Configuration Guide
 
-- [ ] First admin account setup
-- [ ] First normal user setup
-- [ ] MFA recommendation applied
-- [ ] First OIDC provider/client example
-- [ ] First proxy provider example
-- [ ] App portal example
-- [ ] Group and role examples
+Hands-on walkthrough written in `docs/first-sso-configuration.md`, covering every item below with
+a worked example. These are live-system actions, so each stays unchecked until actually performed
+against a running instance — Docker was not available in the environment this session ran in, so
+the guide is ready but unexecuted. Run it via `scripts/bootstrap-sso.sh`, then work the doc top to
+bottom.
+
+- [ ] First admin account setup (guide ready: `docs/first-sso-configuration.md` §1)
+- [ ] First normal user setup (guide ready: §2)
+- [ ] MFA recommendation applied (guide ready: §3)
+- [ ] First OIDC provider/client example (guide ready: §5)
+- [ ] First proxy provider example (guide ready: §6)
+- [ ] App portal example (guide ready: §7)
+- [ ] Group and role examples (guide ready: §4)
 
 ## Phase 4: Protect First NAS Web App
+
+Blocked on a decision only you can make — which real NAS app to protect first. Nothing here is
+implemented against a real app (by design; see README "What This Project Does Not Do"). When
+you've picked one, `docs/first-sso-configuration.md` §5/§6 and
+`examples/app-integrations/` give you the concrete steps to follow.
 
 - [ ] Select one simple internal app
 - [ ] Protect it through OIDC if native support exists
@@ -63,25 +74,34 @@ full description of each phase.
 
 ## Phase 5: Multi-App SSO Rollout
 
-- [ ] Standard app onboarding checklist
-- [ ] Per-app client/provider naming convention
-- [ ] Per-app group access policy
-- [ ] Per-app redirect URL documentation
-- [ ] Per-app logout behavior
-- [ ] App portal organization
+- [x] Standard app onboarding checklist (`docs/multi-app-rollout.md`)
+- [x] Per-app client/provider naming convention (`docs/multi-app-rollout.md`)
+- [x] Per-app group access policy (`docs/multi-app-rollout.md`)
+- [x] Per-app redirect URL documentation (`docs/multi-app-rollout.md`)
+- [x] Per-app logout behavior (`docs/multi-app-rollout.md`)
+- [x] App portal organization (`docs/multi-app-rollout.md`)
 
 ## Phase 6: Security Hardening
 
-- [ ] MFA enforcement
-- [ ] Admin account separation
-- [ ] Backup and restore test
-- [ ] Emergency access plan
-- [ ] Audit logging
-- [ ] Session lifetime review
-- [ ] Password policy review
-- [ ] Recovery codes
+Procedures documented in `docs/security-hardening.md`. Each stays unchecked until actually carried
+out against a running instance (requires Docker, not available in this environment this session).
+
+- [ ] MFA enforcement (procedure ready)
+- [ ] Admin account separation (procedure ready)
+- [ ] Backup and restore test (procedure ready — needs a real run against a disposable environment)
+- [ ] Emergency access plan (procedure ready — needs your own off-repo notes filled in)
+- [ ] Audit logging (procedure ready — needs an ongoing review cadence you set)
+- [ ] Session lifetime review (procedure ready)
+- [ ] Password policy review (procedure ready)
+- [ ] Recovery codes (procedure ready)
 
 ## Phase 7: Future Advanced Identity
+
+Intentionally documentation-only for now (per project rules: document future capabilities instead
+of implementing them ahead of need). Tracked as flags in `docs/future-flags.md`
+(`ENABLE_EXTERNAL_IDENTITY_PROVIDERS`, `ENABLE_WEBAUTHN_PASSKEYS`, `ENABLE_LDAP_SUPPORT`,
+`ENABLE_SAML_SUPPORT`, `ENABLE_API_AUTH_GATEWAY`, `ENABLE_SERVICE_ACCOUNTS`,
+`ENABLE_GROUP_BASED_ACCESS`). No further action planned until a real need arises.
 
 - [ ] External identity providers
 - [ ] Passkeys/WebAuthn
