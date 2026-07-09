@@ -36,7 +36,7 @@ any app in Phase 4/5 becomes something you'd be upset to lose access to.
 ## Emergency Access Plan
 
 - Write down (outside of Git — a password manager note is fine) the exact steps to:
-  1. Reach the Docker host directly (SSH/console) if `auth.veloso.dev` is unreachable.
+  1. Reach the Docker host directly (SSH/console) if `auth.example.com` is unreachable.
   2. Restart the stack (`docker compose up -d` from this repo) without needing the web UI first.
   3. Reset the admin password via authentik's management command if locked out (see
      [`docs/troubleshooting.md`](troubleshooting.md) — "Lost Admin Password").

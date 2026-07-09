@@ -63,7 +63,7 @@ one — see Phase 4).
 
 1. **Applications → Providers → Create → OAuth2/OpenID Provider.**
    - Name: `provider-example-oidc-app`
-   - Redirect URI: `https://example-oidc-app.veloso.dev/oauth/callback` (or
+   - Redirect URI: `https://example-oidc-app.example.com/oauth/callback` (or
      `http://localhost:<port>/oauth/callback` for local testing)
    - Scopes: `openid profile email`
 2. **Applications → Applications → Create.**
@@ -85,7 +85,7 @@ Worked example using a placeholder app `example-forward-auth-app`.
 2. **Applications → Providers → Create → Proxy Provider.**
    - Mode: **Forward auth (single application)**
    - Name: `provider-example-forward-auth-app`
-   - External host: `https://example-forward-auth-app.veloso.dev`
+   - External host: `https://example-forward-auth-app.example.com`
 3. **Applications → Applications → Create.**
    - Name: `example-forward-auth-app`
    - Provider: `provider-example-forward-auth-app`

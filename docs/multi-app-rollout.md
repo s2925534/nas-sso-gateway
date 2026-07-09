@@ -23,7 +23,7 @@ For each new app:
 
 Use the app's own subdomain label as the stable identifier:
 
-| Object | Convention | Example (`tools.veloso.dev`) |
+| Object | Convention | Example (`tools.example.com`) |
 |---|---|---|
 | Provider name | `provider-<app-label>` | `provider-tools` |
 | Application name | `<app-label>` | `tools` |

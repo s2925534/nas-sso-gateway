@@ -41,9 +41,10 @@ for full capabilities).
 
 ## Expected Public Hostname
 
-`auth.veloso.dev` (preferred) or `sso.veloso.dev` (alternative) — see
-[`docs/reverse-proxy-domain.md`](reverse-proxy-domain.md). The deployer is responsible for
-pointing that hostname at the authentik web endpoint only.
+An `auth.<yourdomain>` label is recommended (e.g. `auth.example.com`), with `sso.<yourdomain>` as
+an acceptable alternative — see [`docs/reverse-proxy-domain.md`](reverse-proxy-domain.md). The
+actual value comes from `SSO_DOMAIN`/`SSO_EXTERNAL_URL` in `.env`; this repo never hardcodes a
+domain. The deployer is responsible for pointing that hostname at the authentik web endpoint only.
 
 ## Expected Internal Service
 
@@ -57,7 +58,8 @@ proxy or tunnel. Specifically:
 
 1. Clone or reference this repo on the NAS (or wherever it deploys from).
 2. Provide a real `.env` (never commit it) with `SSO_BASE_PATH` set to the deployer-managed
-   persistent directory, and `SSO_DOMAIN` / `SSO_EXTERNAL_URL` set to `auth.veloso.dev`.
+   persistent directory, and `SSO_DOMAIN` / `SSO_EXTERNAL_URL` set to your chosen hostname (e.g.
+   `auth.example.com`).
 3. Run `docker compose up -d` (directly, or via the deployer's own `deploy`/`update` workflow for
    an existing project's Compose file).
 4. Wire the deployer's reverse-proxy/tunnel routing at the authentik web port only, following
@@ -77,7 +79,7 @@ documentation only, read by nothing — so instead, this section documents the a
 use:
 
 ```bash
-synology-site deploy auth.veloso.dev \
+synology-site deploy auth.example.com \
   --compose-file ./docker-compose.yml \
   --env-file ./.env \
   --container-name sso-authentik-server \

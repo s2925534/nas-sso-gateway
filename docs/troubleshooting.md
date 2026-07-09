@@ -5,7 +5,7 @@
 - Confirm the `authentik-server` container is running: `docker compose ps`.
 - Confirm `SSO_BIND_HOST`/`SSO_HTTP_PORT` match what you're browsing to.
 - If running locally, try `http://localhost:<SSO_HTTP_PORT>` before troubleshooting DNS/proxy.
-- If deployer-managed, confirm the tunnel/reverse-proxy rule for `auth.veloso.dev` is active — see
+- If deployer-managed, confirm the tunnel/reverse-proxy rule for `auth.example.com` is active — see
   [`docs/deployer-integration.md`](deployer-integration.md).
 
 ## Login Loop
@@ -19,7 +19,7 @@
 ## Incorrect External URL
 
 - `SSO_EXTERNAL_URL` must be the exact public URL (scheme + host, no trailing path) that users and
-  apps will use — e.g. `https://auth.veloso.dev`, not `http://localhost:9000` once exposed.
+  apps will use — e.g. `https://auth.example.com`, not `http://localhost:9000` once exposed.
 - Changing this after apps are integrated may require updating their OIDC issuer URLs too.
 
 ## Wrong Redirect URI
@@ -88,7 +88,7 @@
 ## Public Domain Not Routing
 
 - This is a deployer-side issue by design — check `../synology-site-deployer`'s own DNS/Cloudflare
-  Tunnel/Traefik configuration and logs, not this repo. Confirm `auth.veloso.dev` resolves and
+  Tunnel/Traefik configuration and logs, not this repo. Confirm `auth.example.com` resolves and
   confirm the tunnel/proxy rule points at the correct internal port
   (`SSO_BIND_HOST:SSO_HTTP_PORT`).
 

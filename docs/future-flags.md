@@ -8,7 +8,7 @@ unless a specific env var already exists for one (e.g. `PUBLIC_EXPOSURE`, `DEPLO
 | Flag | Meaning |
 |---|---|
 | `ENABLE_DEPLOYER_DOMAIN_MANAGEMENT` | Allow `../synology-site-deployer` to manage DNS, Cloudflare, tunnel, reverse proxy, certs, and hostname exposure for this service. |
-| `ENABLE_PUBLIC_AUTH_DOMAIN` | Expose authentik at `auth.veloso.dev` through the deployer. |
+| `ENABLE_PUBLIC_AUTH_DOMAIN` | Expose authentik at `auth.example.com` through the deployer. |
 | `ENABLE_MFA_ENFORCEMENT` | Require MFA for all users, or for selected groups. |
 | `ENABLE_WEBAUTHN_PASSKEYS` | Support WebAuthn/passkeys as a stronger authentication method. |
 | `ENABLE_OIDC_APP_TEMPLATES` | Create reusable templates for adding OIDC clients to future apps. |

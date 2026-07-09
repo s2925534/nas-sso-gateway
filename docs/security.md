@@ -45,7 +45,7 @@ own laptop.
 
 ## Public Exposure Rules
 
-- This repo does not implement public exposure. Public exposure of `auth.veloso.dev` happens only
+- This repo does not implement public exposure. Public exposure of `auth.example.com` happens only
   through `../synology-site-deployer` (Cloudflare Tunnel or Traefik), and only after you
   deliberately flip `DEPLOY_MODE`/`PUBLIC_EXPOSURE` and configure the deployer.
 - Only the authentik web endpoint is ever exposed publicly. PostgreSQL, Redis, Synology DSM, and
