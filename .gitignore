@@ -1,0 +1,37 @@
+# Secrets / local environment
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.crt
+
+# Persistent runtime data (default local SSO_BASE_PATH and any override)
+data/
+/data/sso/
+backups/
+logs/
+
+# Database / cache runtime files
+*.rdb
+*.sqlite3
+postgres-data/
+redis-data/
+
+# Local certs generated during testing
+certs/
+
+# OS / editor cruft
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Python (helper scripts / local tooling, if any)
+__pycache__/
+*.pyc
+.venv/
+
+# Generated TODO ledger view (local convenience artifact)
+TODO.html

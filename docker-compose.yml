@@ -1,0 +1,98 @@
+# NAS SSO Gateway — authentik + PostgreSQL + Redis
+#
+# Security rules enforced by this file (see docs/security.md):
+#   - PostgreSQL and Redis publish no host ports — reachable only on the
+#     internal Docker network.
+#   - Only the authentik web server is bound to a host port, and only to
+#     ${SSO_BIND_HOST}:${SSO_HTTP_PORT}.
+#   - All persistent data lives under ${SSO_BASE_PATH}, never a hardcoded
+#     Synology volume path.
+#
+# Public exposure (Cloudflare/DNS/tunnel/certs) is NOT handled here — that is
+# ../synology-site-deployer's job. See docs/deployer-integration.md.
+
+services:
+  postgresql:
+    image: postgres:16-alpine
+    container_name: sso-postgresql
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-authentik}
+      POSTGRES_USER: ${POSTGRES_USER:-authentik}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+    volumes:
+      - ${SSO_BASE_PATH:-./data/sso}/postgres:/var/lib/postgresql/data
+    networks:
+      - sso-internal
+    # No `ports:` — never expose PostgreSQL to the host or the network.
+
+  redis:
+    image: redis:7-alpine
+    container_name: sso-redis
+    restart: unless-stopped
+    command: ["--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - ${SSO_BASE_PATH:-./data/sso}/redis:/data
+    networks:
+      - sso-internal
+    # No `ports:` — never expose Redis to the host or the network.
+
+  authentik-server:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-latest}
+    container_name: sso-authentik-server
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?AUTHENTIK_SECRET_KEY must be set in .env}
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: ${POSTGRES_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
+      AUTHENTIK_BOOTSTRAP_EMAIL: ${AUTHENTIK_BOOTSTRAP_EMAIL:-}
+      AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_BOOTSTRAP_PASSWORD:-}
+      AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_BOOTSTRAP_TOKEN:-}
+    volumes:
+      - ${SSO_BASE_PATH:-./data/sso}/authentik/media:/media
+      - ${SSO_BASE_PATH:-./data/sso}/authentik/custom-templates:/templates
+      - ${SSO_BASE_PATH:-./data/sso}/authentik/certs:/certs
+    ports:
+      - "${SSO_BIND_HOST:-0.0.0.0}:${SSO_HTTP_PORT:-9000}:9000"
+    depends_on:
+      - postgresql
+      - redis
+    networks:
+      - sso-internal
+
+  authentik-worker:
+    image: ghcr.io/goauthentik/server:${AUTHENTIK_TAG:-latest}
+    container_name: sso-authentik-worker
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?AUTHENTIK_SECRET_KEY must be set in .env}
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: ${POSTGRES_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__USER: ${POSTGRES_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${AUTHENTIK_POSTGRES_PASSWORD:-${POSTGRES_PASSWORD}}
+      AUTHENTIK_BOOTSTRAP_EMAIL: ${AUTHENTIK_BOOTSTRAP_EMAIL:-}
+      AUTHENTIK_BOOTSTRAP_PASSWORD: ${AUTHENTIK_BOOTSTRAP_PASSWORD:-}
+      AUTHENTIK_BOOTSTRAP_TOKEN: ${AUTHENTIK_BOOTSTRAP_TOKEN:-}
+    volumes:
+      - ${SSO_BASE_PATH:-./data/sso}/authentik/media:/media
+      - ${SSO_BASE_PATH:-./data/sso}/authentik/custom-templates:/templates
+      - ${SSO_BASE_PATH:-./data/sso}/authentik/certs:/certs
+      # The worker needs Docker access only if you use authentik's Docker
+      # service connections (e.g. for outpost auto-deployment). Left out of
+      # the MVP; document before enabling.
+    depends_on:
+      - postgresql
+      - redis
+    networks:
+      - sso-internal
+    # No `ports:` — the worker has no web UI of its own.
+
+networks:
+  sso-internal:
+    name: sso-internal
