@@ -51,7 +51,7 @@ See [`docs/decision-log.md`](docs/decision-log.md) for the full reasoning.
                         │   certs, reverse proxy)     │
                         └─────────────┬────────────────┘
                                       │ routes public hostname
-                                      │ auth.veloso.dev
+                                      │ (your SSO_DOMAIN, e.g. auth.example.com)
                                       ▼
                         ┌────────────────────────────┐
                         │      authentik server       │◄──┐
@@ -133,6 +133,13 @@ Full breakdown: [`docs/phase-plan.md`](docs/phase-plan.md) and [`TODO.md`](TODO.
 - [`docs/multi-app-rollout.md`](docs/multi-app-rollout.md) — Phase 5 onboarding checklist and naming convention
 - [`docs/security-hardening.md`](docs/security-hardening.md) — Phase 6 hardening procedures
 
+## Developer
+
+Developed by Pedro Veloso.
+
+Contact: `pedro@veloso.dev`
+
 ## License
 
-See [`LICENSE`](LICENSE).
+MIT — free to use, modify, and redistribute, provided without warranty of any kind. See
+[`LICENSE`](LICENSE) for the full text.
