@@ -24,16 +24,16 @@ full description of each phase.
 
 ## Phase 1: Authentik MVP Foundation
 
-- [ ] `.env.example`
-- [ ] `.gitignore`
-- [ ] Docker Compose for authentik, PostgreSQL, and Redis
-- [ ] Folder creation script
-- [ ] Bootstrap script
-- [ ] Health check script
-- [ ] Backup script
-- [ ] Initial local-only startup
-- [ ] Basic validation
-- [ ] Commit and push
+- [x] `.env.example`
+- [x] `.gitignore`
+- [x] Docker Compose for authentik, PostgreSQL, and Redis
+- [x] Folder creation script
+- [x] Bootstrap script
+- [x] Health check script
+- [x] Backup script
+- [x] Initial local-only startup (`create-folders.sh` smoke-tested; full `docker compose up` requires Docker, not available in this environment — see manual steps in README)
+- [x] Basic validation
+- [x] Commit and push
 
 ## Phase 2: Deployer Integration Readiness
 
