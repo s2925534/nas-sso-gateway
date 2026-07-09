@@ -14,7 +14,7 @@ Applications → Providers → Create → OAuth2/OpenID Provider:
 Note the generated **Client ID**, **Client Secret**, and issuer URL, e.g.:
 
 ```
-https://auth.veloso.dev/application/o/app-example/
+https://auth.example.com/application/o/app-example/
 ```
 
 ## 2. Configure the App
@@ -22,7 +22,7 @@ https://auth.veloso.dev/application/o/app-example/
 Most OIDC libraries want roughly this shape (illustrative, not a specific SDK):
 
 ```env
-OIDC_ISSUER_URL=https://auth.veloso.dev/application/o/app-example/
+OIDC_ISSUER_URL=https://auth.example.com/application/o/app-example/
 OIDC_CLIENT_ID=<from authentik>
 OIDC_CLIENT_SECRET=<from authentik>
 OIDC_REDIRECT_URI=https://app.example.com/oauth/callback
@@ -32,14 +32,14 @@ OIDC_SCOPES=openid profile email
 ## 3. Verify Discovery
 
 ```bash
-curl https://auth.veloso.dev/application/o/app-example/.well-known/openid-configuration
+curl https://auth.example.com/application/o/app-example/.well-known/openid-configuration
 ```
 
 Confirms the issuer, authorization/token/userinfo endpoints, and supported scopes/claims.
 
 ## 4. Test the Flow
 
-1. Visit the app; it should redirect to `auth.veloso.dev` for login.
+1. Visit the app; it should redirect to `auth.example.com` for login.
 2. Log in (and complete MFA if enabled).
 3. Confirm redirect back to `OIDC_REDIRECT_URI` with a valid session in the app.
 4. Confirm the app can read expected claims (`email`, `groups`, etc.) from the ID token/userinfo.

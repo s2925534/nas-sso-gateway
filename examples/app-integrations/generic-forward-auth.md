@@ -21,7 +21,7 @@ labels:
   - traefik.http.middlewares.authentik.forwardauth.trustForwardHeader=true
   - traefik.http.middlewares.authentik.forwardauth.authResponseHeaders=X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid
   - traefik.http.routers.your-app.middlewares=authentik@docker
-  - traefik.http.routers.your-app.rule=Host(`tools.veloso.dev`)
+  - traefik.http.routers.your-app.rule=Host(`tools.example.com`)
 ```
 
 Equivalent concepts apply for other reverse proxies (nginx `auth_request`, Caddy
