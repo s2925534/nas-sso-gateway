@@ -66,6 +66,36 @@ proxy or tunnel. Specifically:
 5. Leave `PUBLIC_EXPOSURE=false` until DNS/tunnel/certs are confirmed working end-to-end, then
    flip it and re-deploy.
 
+## No Metadata File Convention — Use CLI Flags
+
+`../synology-site-deployer`'s `deploy` command does not read any manifest/metadata file from a
+target project — it only reads the exact `--compose-file`/`--env-file` paths passed on the command
+line, plus that project's `.dockerignore` if `--source-dir` is used for upload. Service identity
+(port, health path, container name) is passed as CLI flags at deploy time, not discovered from a
+file in this repo. A `deploy.json`/`.deployer/` metadata file here would therefore be
+documentation only, read by nothing — so instead, this section documents the actual invocation to
+use:
+
+```bash
+synology-site deploy auth.veloso.dev \
+  --compose-file ./docker-compose.yml \
+  --env-file ./.env \
+  --container-name sso-authentik-server \
+  --port 9000
+```
+
+- Omit `--port` instead if the NAS already runs Traefik and routing is done via Docker labels
+  rather than per-app port allocation (see the deployer's own `docs/traefik-letsencrypt.md`).
+- **Do not pass `--health-path /-/health/ready/` or `/-/health/live/`.** The deployer's health
+  check requires an exact HTTP `200` response; authentik's own liveness/readiness endpoints return
+  `204 No Content`, which the deployer treats as a failed health check. If you want an automated
+  post-deploy health check, use `--health-path /` instead (the login/flow page resolves to `200`),
+  or skip `--health-path` entirely and run `scripts/health-check.sh` manually after deploy.
+- After the deployer's `deploy` command finishes, it writes its own `.synology-site.json` marker
+  on the **remote NAS project folder** (not in this repo) recording the port/compose file/
+  container name for later `synology-site update` runs — this repo does not need to know about or
+  maintain that file.
+
 ## Future Apps
 
 Apps protected by this SSO gateway continue to be deployed the same way they are today (via the
