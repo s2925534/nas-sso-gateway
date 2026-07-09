@@ -41,7 +41,7 @@ Cloudflare (DNS + Tunnel)  ──┐
    ▼                         │
 Reverse proxy / tunnel  ─────┘
    │  forwards only:
-   │  https://auth.veloso.dev → SSO_BIND_HOST:SSO_HTTP_PORT
+   │  https://<your SSO_DOMAIN> → SSO_BIND_HOST:SSO_HTTP_PORT
    ▼
 authentik-server (this repo)
 ```
@@ -55,7 +55,7 @@ authentik-server (this repo)
 ## 3. Native OIDC App Integration Architecture
 
 ```
-User ──▶ App (e.g. ai.veloso.dev) ──redirect──▶ authentik (auth.veloso.dev)
+User ──▶ App (e.g. photos.example.com) ──redirect──▶ authentik (auth.example.com)
                                                      │ authenticate + consent
 User ◀──────────── redirect w/ auth code ───────────┘
 App ──exchange code for tokens──▶ authentik
@@ -87,11 +87,11 @@ User ──▶ Reverse proxy ──"is this request authenticated?"──▶ aut
 ```
                          ┌───────────────────────────┐
                          │   authentik (app portal)    │
-                         │  auth.veloso.dev             │
+                         │  auth.example.com             │
                          └──────────────┬────────────────┘
         ┌───────────────┬───────────────┼───────────────┬───────────────┐
         ▼               ▼               ▼               ▼               ▼
-   ai.veloso.dev   tools.veloso.dev  blog-admin...   research...    apps.veloso.dev
+ photos.example.com  admin-tools...   wiki.example.com  dashboard...  apps.example.com
    (OIDC)          (forward-auth)    (OIDC)          (forward-auth) (OIDC or proxy)
 ```
 

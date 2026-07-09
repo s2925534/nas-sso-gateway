@@ -57,15 +57,18 @@ JWKS endpoint — no session or cookie involved. Suited to service-to-service an
 cases. Tracked under `ENABLE_API_AUTH_GATEWAY` / `ENABLE_SERVICE_ACCOUNTS` in
 [`docs/future-flags.md`](future-flags.md).
 
-## Future App Examples (Documentation Only — Not Configured in MVP)
+## Illustrative App Examples (Documentation Only — Not Configured in MVP)
 
-| App | Likely pattern |
+Substitute your own subdomains — these are placeholder names to show which pattern typically fits
+which kind of app.
+
+| App (example) | Likely pattern |
 |---|---|
-| `ai.veloso.dev` | OIDC (Pattern 1) |
-| `tools.veloso.dev` | Forward-auth (Pattern 2) |
-| `blog-admin.veloso.dev` | OIDC (Pattern 1) or forward-auth |
-| `research.veloso.dev` | OIDC (Pattern 1) |
-| `apps.veloso.dev` | App portal umbrella (Pattern 4) over several apps |
+| `photos.example.com` (an app you built yourself) | OIDC (Pattern 1) |
+| `admin-tools.example.com` (a NAS admin tool with no native SSO) | Forward-auth (Pattern 2) |
+| `wiki.example.com` | OIDC (Pattern 1) or forward-auth |
+| `dashboard.example.com` | OIDC (Pattern 1) |
+| `apps.example.com` | App portal umbrella (Pattern 4) over several apps |
 | Portainer / other container tools | Forward-auth (Pattern 2) |
 | Any future NAS web app | Whichever of Pattern 1/2/3 fits its native support |
 
