@@ -11,15 +11,21 @@ Self-hosted Single Sign-On (SSO) gateway for NAS-hosted web apps, built on
   that session across every protected app.
 - Documents how to integrate future apps via native OIDC/OAuth2, reverse-proxy forward-auth, or
   trusted headers.
-- Provides a portable, deployer-friendly deployment: no hardcoded NAS volume paths, no Cloudflare
-  automation baked in.
+- Provides a portable deployment that runs standalone (plain `docker compose up -d`) or behind
+  any reverse-proxy/tunnel/deployment tooling you already use: no hardcoded NAS volume paths, no
+  Cloudflare automation baked in, and no dependency on any specific external tool.
 - Keeps the database and cache private, and documents a security-first rollout (local-only /
   LAN-only first, MFA before any public exposure).
 
 ## What This Project Does Not Do
 
-- It does not implement Cloudflare, DNS, tunnel, or certificate automation. That belongs to
-  [`../synology-site-deployer`](../synology-site-deployer).
+- It does not implement Cloudflare, DNS, tunnel, or certificate automation, and it does not
+  require any particular external tool for that. Bring whatever reverse-proxy/tunnel/deployment
+  tooling you already use (Traefik, Caddy, Nginx Proxy Manager, Cloudflare Tunnel configured by
+  hand, a deployer script, or nothing at all for local-only use). The maintainer's own setup uses
+  a companion project, [`../synology-site-deployer`](../synology-site-deployer), documented as one
+  worked example in [`docs/deployer-integration.md`](docs/deployer-integration.md) — it is not a
+  dependency of this repo.
 - It does not retrofit every existing app with SSO immediately. The MVP stands up the identity
   provider and documents integration patterns; app-by-app integration is a later phase.
 - It does not assume or require a specific Synology volume (e.g. `/volume1`). All persistent data
@@ -46,9 +52,11 @@ See [`docs/decision-log.md`](docs/decision-log.md) for the full reasoning.
 
 ```
                         ┌────────────────────────────┐
-                        │   ../synology-site-deployer │
-                        │  (DNS, Cloudflare, tunnel,  │
-                        │   certs, reverse proxy)     │
+                        │  Your reverse proxy / tunnel │
+                        │  of choice (DNS, Cloudflare, │
+                        │  certs, reverse proxy) — e.g. │
+                        │  Traefik, Cloudflare Tunnel,  │
+                        │  or a deployer script          │
                         └─────────────┬────────────────┘
                                       │ routes public hostname
                                       │ (your SSO_DOMAIN, e.g. auth.example.com)
@@ -77,20 +85,23 @@ See [`docs/decision-log.md`](docs/decision-log.md) for the full reasoning.
 ```
 
 This repo owns the box in the middle (authentik + Postgres + Redis). Everything above the dashed
-line — public hostname, TLS, tunnel — is owned by `../synology-site-deployer`.
+line — public hostname, TLS, tunnel — is owned by whatever external tooling you choose; this repo
+has no opinion on which one.
 
-## Deployer-Managed Domain
+## External Reverse-Proxy / Domain Exposure
 
-Public exposure of `auth.example.com` (DNS, Cloudflare Tunnel or Traefik, certificates) is handled
-entirely by `../synology-site-deployer`. This repo only needs to expose authentik's web port on
-the configured bind host/port; see [`docs/deployer-integration.md`](docs/deployer-integration.md)
-and [`docs/reverse-proxy-domain.md`](docs/reverse-proxy-domain.md).
+Public exposure of your chosen hostname (DNS, tunnel, reverse proxy, certificates) is handled
+entirely outside this repo, by whatever tooling you already use — this repo only needs to expose
+authentik's web port on the configured bind host/port. See
+[`docs/deployer-integration.md`](docs/deployer-integration.md) (covers running standalone as well
+as integrating with external tooling) and
+[`docs/reverse-proxy-domain.md`](docs/reverse-proxy-domain.md).
 
 ## No Fixed Synology Volume
 
 Persistent storage is controlled entirely by the `SSO_BASE_PATH` environment variable — never a
 hardcoded `/volume1/...` path. Run it anywhere (local Docker, a Linux server, or a Synology NAS)
-and let the deployer (or you, manually) decide the real path. See
+and let your deployment tooling (or you, manually) decide the real path. See
 [`docs/architecture.md`](docs/architecture.md) and `.env.example`.
 
 ## Security Warning
@@ -106,7 +117,7 @@ emergency bypass plan for protected apps in case the SSO admin account is ever l
 |---|---|
 | 0 | Planning and documentation foundation (this stage) |
 | 1 | authentik MVP: Docker Compose, env, scripts |
-| 2 | Deployer integration readiness |
+| 2 | External deployment integration readiness |
 | 3 | First SSO configuration (admin, users, MFA, first OIDC/proxy provider) |
 | 4 | Protect first NAS web app |
 | 5 | Multi-app SSO rollout |
@@ -122,7 +133,7 @@ Full breakdown: [`docs/phase-plan.md`](docs/phase-plan.md) and [`TODO.md`](TODO.
 - [`docs/decision-log.md`](docs/decision-log.md) — ADR-style decisions
 - [`docs/security.md`](docs/security.md) — security assumptions and rules
 - [`docs/authentik-manual.md`](docs/authentik-manual.md) — operating authentik in this project
-- [`docs/deployer-integration.md`](docs/deployer-integration.md) — how the deployer consumes this repo
+- [`docs/deployer-integration.md`](docs/deployer-integration.md) — running standalone or integrating with external deployment tooling
 - [`docs/reverse-proxy-domain.md`](docs/reverse-proxy-domain.md) — hostname and routing plan
 - [`docs/app-integration-patterns.md`](docs/app-integration-patterns.md) — five SSO integration patterns
 - [`docs/oidc-integration.md`](docs/oidc-integration.md) — OIDC integration reference

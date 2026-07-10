@@ -2,8 +2,9 @@
 #
 # bootstrap-sso.sh — bring up the local/LAN SSO stack for the first time.
 #
-# Does not delete anything. Public exposure is deployer-managed — this
-# script only starts the local Docker Compose stack.
+# Does not delete anything. Public exposure (if any) is handled by whatever
+# external tooling you choose — this script only starts the local Docker
+# Compose stack.
 
 set -euo pipefail
 
@@ -56,8 +57,9 @@ SSO stack is up.
   Access URL (external): ${SSO_EXTERNAL_URL:-<not set>}
 
 Reminders:
-  - Public exposure of this service is managed by ../synology-site-deployer,
-    not this script. Keep PUBLIC_EXPOSURE=false in .env until that is wired up.
+  - Public exposure of this service is handled by whatever external
+    reverse-proxy/tunnel/deployer tooling you choose (if any), not this
+    script. Keep PUBLIC_EXPOSURE=false in .env until that is wired up.
   - Change the bootstrap admin credentials as soon as you log in, and enable
     MFA before relying on this beyond local testing. See docs/security.md.
   - This script created folders and started containers only — it never

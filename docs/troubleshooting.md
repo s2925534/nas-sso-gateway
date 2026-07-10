@@ -5,8 +5,8 @@
 - Confirm the `authentik-server` container is running: `docker compose ps`.
 - Confirm `SSO_BIND_HOST`/`SSO_HTTP_PORT` match what you're browsing to.
 - If running locally, try `http://localhost:<SSO_HTTP_PORT>` before troubleshooting DNS/proxy.
-- If deployer-managed, confirm the tunnel/reverse-proxy rule for `auth.example.com` is active — see
-  [`docs/deployer-integration.md`](deployer-integration.md).
+- If exposed externally, confirm the tunnel/reverse-proxy rule for your `SSO_DOMAIN` is active in
+  whatever tooling manages it — see [`docs/deployer-integration.md`](deployer-integration.md).
 
 ## Login Loop
 
@@ -60,8 +60,8 @@
 - Ensure the path exists and is writable before starting containers — `scripts/create-folders.sh`
   handles creation, but ownership/permissions depend on your host (Docker Desktop vs. Linux vs.
   Synology container user).
-- On Synology, container processes may run as a specific UID/GID; check the deployer's own
-  conventions for matching folder ownership.
+- On Synology, container processes may run as a specific UID/GID; check whatever external
+  tooling you use (if any) for its conventions on matching folder ownership.
 
 ## Lost Admin Password
 
@@ -87,14 +87,14 @@
 
 ## Public Domain Not Routing
 
-- This is a deployer-side issue by design — check `../synology-site-deployer`'s own DNS/Cloudflare
-  Tunnel/Traefik configuration and logs, not this repo. Confirm `auth.example.com` resolves and
-  confirm the tunnel/proxy rule points at the correct internal port
+- This is an issue in whatever external tooling handles your DNS/Cloudflare Tunnel/Traefik
+  configuration, not this repo — check that tool's own logs and config. Confirm your `SSO_DOMAIN`
+  resolves and confirm the tunnel/proxy rule points at the correct internal port
   (`SSO_BIND_HOST:SSO_HTTP_PORT`).
 
-## Deployer Integration Issues
+## External Deployment Integration Issues
 
-- Confirm `.env` (on the deployer side) sets `SSO_BASE_PATH` to a real, writable, persistent path
-  — not left at the local default (`./data/sso`) when deployed to the NAS.
-- Confirm only the authentik web port is included in the deployer's routing config — see
-  [`docs/deployer-integration.md`](deployer-integration.md).
+- Confirm `.env` (wherever it's deployed) sets `SSO_BASE_PATH` to a real, writable, persistent
+  path — not left at the local default (`./data/sso`) once deployed somewhere permanent.
+- Confirm only the authentik web port is included in whatever routing config your reverse
+  proxy/tunnel/deployer uses — see [`docs/deployer-integration.md`](deployer-integration.md).

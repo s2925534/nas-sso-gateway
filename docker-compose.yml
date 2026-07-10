@@ -8,8 +8,9 @@
 #   - All persistent data lives under ${SSO_BASE_PATH}, never a hardcoded
 #     Synology volume path.
 #
-# Public exposure (Cloudflare/DNS/tunnel/certs) is NOT handled here — that is
-# ../synology-site-deployer's job. See docs/deployer-integration.md.
+# Public exposure (Cloudflare/DNS/tunnel/certs) is NOT handled here — bring
+# whatever reverse-proxy/tunnel/deployer tooling you use, or none at all for
+# local-only use. See docs/deployer-integration.md.
 
 services:
   postgresql:

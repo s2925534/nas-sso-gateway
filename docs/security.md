@@ -45,11 +45,12 @@ own laptop.
 
 ## Public Exposure Rules
 
-- This repo does not implement public exposure. Public exposure of `auth.example.com` happens only
-  through `../synology-site-deployer` (Cloudflare Tunnel or Traefik), and only after you
-  deliberately flip `DEPLOY_MODE`/`PUBLIC_EXPOSURE` and configure the deployer.
+- This repo does not implement public exposure. Public exposure of your `SSO_DOMAIN` happens only
+  through whatever external tooling you choose (Cloudflare Tunnel, Traefik, a deployer script such
+  as `../synology-site-deployer`, or similar), and only after you deliberately flip
+  `DEPLOY_MODE`/`PUBLIC_EXPOSURE` and configure that tooling.
 - Only the authentik web endpoint is ever exposed publicly. PostgreSQL, Redis, Synology DSM, and
-  SSH must never be reachable from the deployer's public routing.
+  SSH must never be reachable through whatever tooling handles your public routing.
 
 ## Trusted Header Warning
 
@@ -96,9 +97,9 @@ own laptop.
 
 ## Reverse Proxy Trust Boundary
 
-- The reverse proxy (deployer-managed) is the trust boundary for forward-auth and trusted-header
-  patterns. Everything on the other side of that boundary must assume requests are already
-  authenticated — which means nothing on that side may be reachable by any other path.
+- The reverse proxy (whatever external tooling manages it) is the trust boundary for forward-auth
+  and trusted-header patterns. Everything on the other side of that boundary must assume requests
+  are already authenticated — which means nothing on that side may be reachable by any other path.
 - Confirm required headers (e.g. `X-Forwarded-*`, `Remote-User`) are preserved end-to-end by the
   reverse proxy; see [`docs/reverse-proxy-domain.md`](reverse-proxy-domain.md) and
   [`docs/proxy-auth-integration.md`](proxy-auth-integration.md).

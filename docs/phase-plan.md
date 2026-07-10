@@ -20,12 +20,14 @@ Compose file for authentik server + worker + PostgreSQL + Redis, and four script
 LAN-only; no public exposure. Validated (shell syntax, compose syntax, no secrets staged) before
 commit.
 
-## Phase 2 — Deployer Integration Readiness
+## Phase 2 — External Deployment Integration Readiness
 
-Goal: make this repo consumable by `../synology-site-deployer` without either project reaching
-into the other's responsibilities. Document what the deployer needs to know (expected port,
-expected hostname, expected persistent-path contract) and confirm the deployer owns Cloudflare/DNS
-end to end. No Cloudflare code lands in this repo.
+Goal: make this repo consumable by *any* external deployment/reverse-proxy tooling — or none at
+all — without this repo reaching into that tooling's responsibilities. Document what such tooling
+needs to know (expected port, expected hostname, expected persistent-path contract) and confirm
+Cloudflare/DNS is always owned externally, end to end. No Cloudflare code lands in this repo. The
+maintainer's own companion project, `../synology-site-deployer`, is documented as one worked
+example, not a requirement.
 
 ## Phase 3 — First SSO Configuration Guide
 

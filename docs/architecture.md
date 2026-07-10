@@ -29,16 +29,16 @@
   volume path.
 - `DEPLOY_MODE=local_only` and `PUBLIC_EXPOSURE=false` are the safe MVP defaults.
 
-## 2. Deployer-Managed Public Exposure Architecture
+## 2. External Public Exposure Architecture
 
 ```
 Internet
    │
    ▼
 Cloudflare (DNS + Tunnel)  ──┐
-   or Traefik + Let's Encrypt│  owned by ../synology-site-deployer
-   (ports 80/443 on NAS)     │
-   ▼                         │
+   or Traefik + Let's Encrypt│  owned by whatever external tooling you choose
+   (ports 80/443)            │  (a reverse proxy, a tunnel, or a deployer script —
+   ▼                         │   this repo does not require any particular one)
 Reverse proxy / tunnel  ─────┘
    │  forwards only:
    │  https://<your SSO_DOMAIN> → SSO_BIND_HOST:SSO_HTTP_PORT
@@ -46,10 +46,10 @@ Reverse proxy / tunnel  ─────┘
 authentik-server (this repo)
 ```
 
-- This repo never talks to Cloudflare, DNS, or certificate APIs.
-- The deployer decides whether routing is via Cloudflare Tunnel or Traefik (see its own
-  `docs/traefik-letsencrypt.md`), and points only the authentik web endpoint at the public
-  hostname.
+- This repo never talks to Cloudflare, DNS, or certificate APIs, regardless of how it's deployed.
+- Whatever you use for exposure — Cloudflare Tunnel, Traefik, Nginx Proxy Manager, Caddy, or a
+  deployer script such as the maintainer's own `../synology-site-deployer` — decides the routing
+  method, and should point only the authentik web endpoint at the public hostname.
 - PostgreSQL, Redis, DSM, and SSH are never included in that routing.
 
 ## 3. Native OIDC App Integration Architecture

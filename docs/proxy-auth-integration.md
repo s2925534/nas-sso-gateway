@@ -37,18 +37,20 @@ The reverse proxy is the security boundary for this entire pattern. That means:
   published host port, no unrestricted Docker network access, no direct LAN route).
 - The proxy must be configured to always consult the authentik outpost before forwarding — a
   misconfigured rule that forwards unconditionally defeats the whole pattern.
-- TLS/certs and the public hostname for the app are still deployer-managed, same as for authentik
-  itself.
+- TLS/certs and the public hostname for the app are still handled externally, same as for
+  authentik itself.
 
-## Deployer-Managed Reverse Proxy Assumption
+## Reverse Proxy Is Configured Externally
 
 This repo assumes the actual reverse proxy (Cloudflare Tunnel ingress rules, or Traefik with
-forward-auth middleware) is configured by `../synology-site-deployer`, the same way it configures
-routing for any other app. This repo's job is to run the authentik outpost/proxy provider that the
-reverse proxy calls — not to run the reverse proxy itself.
+forward-auth middleware) is configured by whatever tooling you already use for routing — a
+deployer script (e.g. the maintainer's own `../synology-site-deployer`, entirely optional),
+Traefik/Caddy/Nginx Proxy Manager configured by hand, or anything else. This repo's job is only to
+run the authentik outpost/proxy provider that the reverse proxy calls — not to run the reverse
+proxy itself.
 
-Traefik forward-auth middleware example (for reference only — actual labels are applied by the
-deployer or the protected app's own Compose file):
+Traefik forward-auth middleware example (for reference only — actual labels are applied by
+whatever tooling manages your reverse proxy, or the protected app's own Compose file):
 
 ```yaml
 labels:

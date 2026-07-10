@@ -2,8 +2,9 @@
 
 A technology-agnostic sketch of protecting an app with authentik's forward-auth outpost (Pattern
 2), for apps with no native SSO support. The actual reverse-proxy configuration is applied by
-`../synology-site-deployer` (or wherever the app's own reverse proxy lives) — this is a reference
-shape, not something this repo deploys.
+whatever tooling manages the app's own reverse proxy (a deployer script such as
+`../synology-site-deployer`, Traefik/Caddy/Nginx Proxy Manager configured by hand, or anything
+else) — this is a reference shape, not something this repo deploys.
 
 ## 1. Create the Provider in authentik
 

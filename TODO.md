@@ -35,14 +35,21 @@ full description of each phase.
 - [x] Basic validation
 - [x] Commit and push
 
-## Phase 2: Deployer Integration Readiness
+## Phase 2: External Deployment Integration Readiness
 
-- [x] Document how `../synology-site-deployer` should consume this repo
-- [x] Add deployer metadata if useful — investigated the deployer's `deploy` command source; it reads no manifest/metadata file from a target project (CLI flags only), so a metadata file would be inert. Documented the actual `synology-site deploy` invocation (flags, and an authentik-specific `--health-path` caveat) in `docs/deployer-integration.md` instead.
-- [x] Confirm deployer-managed persistent path expectation
-- [x] Confirm deployer-managed Cloudflare/domain expectation
-- [x] Confirm deployer exposes only authentik web endpoint
+This repo does not depend on any specific deployment tool — it runs standalone via
+`docker compose up -d`, or behind any reverse-proxy/tunnel/deployer of your choice.
+`../synology-site-deployer` is documented as one optional worked example, not a requirement.
+
+- [x] Document how external deployment tooling (standalone, or any reverse proxy/deployer — with `../synology-site-deployer` as one worked example) should consume this repo
+- [x] Add deployer metadata if useful — investigated `synology-site-deployer`'s `deploy` command source as the example case; it reads no manifest/metadata file from a target project (CLI flags only), so a metadata file would be inert for that tool or any similar one. Documented the actual `synology-site deploy` invocation (flags, and an authentik-specific `--health-path` caveat) in `docs/deployer-integration.md` as an example, alongside the standalone path.
+- [x] Confirm the persistent-path contract works whether path is chosen manually or by external tooling (`SSO_BASE_PATH`, never hardcoded)
+- [x] Confirm Cloudflare/domain exposure is always external to this repo, regardless of which tool (or none) is used
+- [x] Confirm only the authentik web endpoint is ever exposed, regardless of which external tooling fronts it
 - [x] Avoid direct Cloudflare implementation in this repo (confirmed — no Cloudflare code/deps anywhere in this repo)
+- [x] Genericize every doc/script/example so nothing hardcodes a personal domain or requires a
+      specific external tool by name (generic `SSO_DOMAIN` / "external tooling" language
+      throughout; `../synology-site-deployer` kept only as one optional worked example)
 
 ## Phase 3: First SSO Configuration Guide
 
@@ -94,6 +101,8 @@ out against a running instance (requires Docker, not available in this environme
 - [ ] Session lifetime review (procedure ready)
 - [ ] Password policy review (procedure ready)
 - [ ] Recovery codes (procedure ready)
+- [ ] Pin exact image versions (authentik/PostgreSQL/Redis) instead of floating tags, and document
+      the upgrade procedure (see "Also Planned" in `docs/future-flags.md`)
 
 ## Phase 7: Future Advanced Identity
 
@@ -101,7 +110,8 @@ Intentionally documentation-only for now (per project rules: document future cap
 of implementing them ahead of need). Tracked as flags in `docs/future-flags.md`
 (`ENABLE_EXTERNAL_IDENTITY_PROVIDERS`, `ENABLE_WEBAUTHN_PASSKEYS`, `ENABLE_LDAP_SUPPORT`,
 `ENABLE_SAML_SUPPORT`, `ENABLE_API_AUTH_GATEWAY`, `ENABLE_SERVICE_ACCOUNTS`,
-`ENABLE_GROUP_BASED_ACCESS`). No further action planned until a real need arises.
+`ENABLE_GROUP_BASED_ACCESS`, `ENABLE_BACKUP_AUTOMATION`, `ENABLE_PORTABLE_LOCAL_SSO_LAB`). No
+further action planned until a real need arises.
 
 - [ ] External identity providers
 - [ ] Passkeys/WebAuthn
@@ -111,3 +121,5 @@ of implementing them ahead of need). Tracked as flags in `docs/future-flags.md`
 - [ ] API auth and service accounts
 - [ ] Fine-grained roles/groups
 - [ ] App-specific policies
+- [ ] Automated backup scheduling (beyond manual `scripts/backup-sso.sh`)
+- [ ] Fully portable local-only SSO lab mode, decoupled from any NAS-specific assumptions

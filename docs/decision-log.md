@@ -35,17 +35,25 @@ in this repo (see [`docs/reverse-proxy-domain.md`](reverse-proxy-domain.md)).
 
 ---
 
-## ADR-003: Keep Cloudflare/domain exposure in `../synology-site-deployer`
+## ADR-003: Keep Cloudflare/domain exposure entirely outside this repo
 
-**Context:** A separate project already automates DNS, Cloudflare Tunnel/Traefik, certificates,
-and reverse-proxy routing for NAS-hosted apps.
+**Context:** DNS, Cloudflare Tunnel/Traefik, certificates, and reverse-proxy routing are a
+separate concern from running authentik, and different operators already use different tools for
+this (Cloudflare Tunnel, Traefik, Nginx Proxy Manager, Caddy, a deployer script, or nothing at all
+for local-only use). The maintainer happens to have a companion project,
+`../synology-site-deployer`, that automates this for NAS-hosted apps — but this repo must not
+depend on it.
 
-**Decision:** This repo never talks to Cloudflare or DNS APIs. It only documents the expected
-public hostname and internal port/route; the deployer project owns making that hostname reachable.
+**Decision:** This repo never talks to Cloudflare or DNS APIs, and never assumes a specific
+external tool. It only documents the expected public hostname and internal port/route; whatever
+external tooling the operator chooses owns making that hostname reachable.
+`../synology-site-deployer` is documented as one worked example in
+[`docs/deployer-integration.md`](deployer-integration.md), not a requirement.
 
 **Consequences:** Clean separation of concerns — this repo stays portable and testable without
-Cloudflare credentials. The deployer must be told (via docs) exactly one endpoint to expose:
-authentik's web port.
+Cloudflare credentials, and works identically whether the operator uses a deployer script, a
+reverse proxy configured by hand, or nothing (local-only). Whatever tool is used only needs to
+know one thing: which endpoint to expose (authentik's web port).
 
 ---
 

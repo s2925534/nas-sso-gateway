@@ -32,22 +32,24 @@ https://auth.example.com  ──▶  authentik web endpoint only
 Replace `auth.example.com` with your own `SSO_DOMAIN`. No other internal service is ever routed
 under this hostname.
 
-## Domain Handling Belongs to the Deployer
+## Domain Handling Is Entirely External to This Repo
 
 DNS records, Cloudflare Tunnel or Traefik configuration, and TLS certificates for your chosen
-hostname are entirely owned by `../synology-site-deployer`. This repo does not implement
-Cloudflare automation, does not call the Cloudflare API, and does not manage certificates.
+hostname are owned by whatever external tooling you choose (a reverse proxy, a tunnel, or a
+deployer script such as `../synology-site-deployer` — none required). This repo does not
+implement Cloudflare automation, does not call the Cloudflare API, and does not manage
+certificates, regardless of which tool (if any) you use.
 
 ## Database and Redis Must Remain Private
 
 Regardless of how your `SSO_DOMAIN` is routed, PostgreSQL and Redis must never be reachable
 through that hostname or any other public path. They have no published host ports in
-`docker-compose.yml` and must not be added to the deployer's reverse-proxy configuration.
+`docker-compose.yml` and must not be added to any reverse-proxy configuration.
 
 ## Reverse Proxy Must Preserve Required Headers
 
-Whichever reverse-proxy technology the deployer uses (Cloudflare Tunnel, Traefik, etc.), it must
-preserve:
+Whichever reverse-proxy technology you use (Cloudflare Tunnel, Traefik, Nginx Proxy Manager,
+Caddy, etc.), it must preserve:
 
 - `Host` — so authentik generates correct URLs/redirects.
 - `X-Forwarded-For`, `X-Forwarded-Proto`, `X-Forwarded-Host` — so authentik and downstream apps see
