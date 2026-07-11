@@ -101,8 +101,9 @@ out against a running instance (requires Docker, not available in this environme
 - [ ] Session lifetime review (procedure ready)
 - [ ] Password policy review (procedure ready)
 - [ ] Recovery codes (procedure ready)
-- [ ] Pin exact image versions (authentik/PostgreSQL/Redis) instead of floating tags, and document
-      the upgrade procedure (see "Also Planned" in `docs/future-flags.md`)
+- [x] Pin exact image versions (authentik/PostgreSQL/Redis) instead of floating tags, and document
+      the upgrade procedure (`docker-compose.yml`, `.env.example`; procedure in
+      `docs/security-hardening.md` — "Image Upgrade Procedure")
 
 ## Phase 7: Future Advanced Identity
 

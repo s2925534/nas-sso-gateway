@@ -26,10 +26,8 @@ unless a specific env var already exists for one (e.g. `PUBLIC_EXPOSURE`, `DEPLO
 | `ENABLE_SERVICE_ACCOUNTS` | Create machine-to-machine auth patterns for apps and automations. |
 | `ENABLE_PORTABLE_LOCAL_SSO_LAB` | Allow this SSO lab to run locally on any computer for testing, fully decoupled from the NAS. |
 
-## Also Planned (Not Yet a Named Flag)
-
-- **Image version pinning:** the MVP Compose file may use current stable/floating tags for
-  convenience; pin exact authentik/PostgreSQL/Redis versions before relying on this in production,
-  and document the upgrade procedure alongside the pin.
-
 See [`docs/phase-plan.md`](phase-plan.md) for which phase each of these belongs to.
+
+Image version pinning (previously listed here) is done — `docker-compose.yml` and `.env.example`
+now pin exact authentik/PostgreSQL/Redis versions, with the upgrade procedure documented in
+[`docs/security-hardening.md`](security-hardening.md) ("Image Upgrade Procedure").

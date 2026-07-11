@@ -15,6 +15,9 @@ from this repo's source alone. Work through it locally/LAN-only before any publi
 - `scripts/health-check.sh` reports all checks passing.
 - You can reach the web UI at `http://<SSO_BIND_HOST or localhost>:<SSO_HTTP_PORT>`.
 
+If any of the above isn't true yet, see [`docs/troubleshooting.md`](troubleshooting.md) —
+"Cannot Reach Authentik", "Database Not Starting", "Redis Not Starting".
+
 ## 1. First Admin Account Setup
 
 1. Visit `/if/flow/initial-setup/` on your instance (authentik's own first-run flow) if this is a
@@ -25,6 +28,9 @@ from this repo's source alone. Work through it locally/LAN-only before any publi
    account from this point on — never your daily login for protected apps.
 4. Remove or rotate `AUTHENTIK_BOOTSTRAP_PASSWORD` from your local `.env` once you've confirmed a
    working admin login through the UI.
+
+If you get locked out before rotating it, see [`docs/troubleshooting.md`](troubleshooting.md) —
+"Lost Admin Password".
 
 ## 2. First Normal User Setup
 
@@ -45,6 +51,8 @@ from this repo's source alone. Work through it locally/LAN-only before any publi
 4. Save the recovery codes authentik generates, outside of this repo, in a password manager.
 5. Do this for the admin account before any public exposure — see `ENABLE_MFA_ENFORCEMENT` in
    [`docs/future-flags.md`](future-flags.md) for later blanket enforcement.
+
+Locked out after enrolling? See [`docs/troubleshooting.md`](troubleshooting.md) — "MFA Lockout".
 
 ## 4. Groups and Roles Example
 
@@ -74,7 +82,10 @@ one — see Phase 4).
    [`docs/oidc-integration.md`](oidc-integration.md) and
    [`examples/app-integrations/generic-oidc-client.md`](../examples/app-integrations/generic-oidc-client.md).
 4. Confirm your normal user can see and launch `example-oidc-app` from the authentik landing page
-   (Step 6); confirm the admin account (not in `app-example-users`) cannot.
+   (Step 7); confirm the admin account (not in `app-example-users`) cannot.
+
+Redirect loop or client mismatch on first login? See [`docs/troubleshooting.md`](troubleshooting.md)
+— "Wrong Redirect URI", "OIDC Client Mismatch".
 
 ## 6. First Proxy Provider Example
 
@@ -94,12 +105,19 @@ Worked example using a placeholder app `example-forward-auth-app`.
    [`docs/proxy-auth-integration.md`](proxy-auth-integration.md) and
    [`examples/app-integrations/generic-forward-auth.md`](../examples/app-integrations/generic-forward-auth.md).
 
+Headers not passing through, or the app not seeing the authenticated user? See
+[`docs/troubleshooting.md`](troubleshooting.md) — "Reverse Proxy Headers Wrong", "App Not
+Respecting Headers".
+
 ## 7. App Portal Example
 
 1. Log in as your normal user (not admin) at the authentik root URL.
 2. Confirm the landing page lists exactly the applications `app-example-users` has access to —
    this *is* the app portal (Pattern 4); no separate configuration is needed beyond group grants.
 3. Confirm apps outside that group's access do **not** appear.
+
+Stuck in a login loop, or the wrong external URL shows up? See
+[`docs/troubleshooting.md`](troubleshooting.md) — "Login Loop", "Incorrect External URL".
 
 ## What This Guide Does Not Do
 

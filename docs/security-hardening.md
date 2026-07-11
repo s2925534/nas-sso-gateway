@@ -75,3 +75,29 @@ any app in Phase 4/5 becomes something you'd be upset to lose access to.
 - Store recovery codes in a password manager, not in this repo, not in plaintext notes synced
   anywhere public.
 - Re-generate and re-store recovery codes if you ever suspect they were exposed.
+
+## Image Upgrade Procedure
+
+`docker-compose.yml` pins exact `authentik`/PostgreSQL/Redis versions rather than floating tags
+(`latest`, `16-alpine`, `7-alpine`), so upgrades are a deliberate, reviewed step rather than
+something that happens silently on a routine `docker compose pull`.
+
+1. Run `scripts/backup-sso.sh` first — see "Backup and Restore Test" above. Never upgrade against
+   a database you have no working restore path for.
+2. Check the release notes for the specific version jump:
+   - authentik: <https://docs.goauthentik.io/releases/> — read every version between your current
+     pin and the target, not just the target's notes; breaking changes and required migration
+     steps are called out per release.
+   - PostgreSQL/Redis: bump patch versions within the same major freely; treat a major version
+     bump (e.g. `16.x` → `17.x`) as its own separate, planned migration.
+3. Update the pin:
+   - `AUTHENTIK_TAG` in your `.env` (or the default in `.env.example` if you're updating the
+     project baseline), matching the exact tag from
+     <https://github.com/goauthentik/authentik/pkgs/container/server>.
+   - The `image:` lines in `docker-compose.yml` for `postgresql`/`redis`, matching exact tags from
+     Docker Hub (`postgres`, `redis` official images).
+4. `docker compose pull && docker compose up -d`, then `scripts/health-check.sh`.
+5. Smoke-test: log in as your normal user (Phase 3, Step 2) and confirm at least one existing
+   OIDC/proxy-provider app still authenticates correctly before considering the upgrade done.
+6. If anything breaks, roll back by restoring the pinned tags and redeploying, then restore the
+   pre-upgrade backup from Step 1 if the database was already migrated.
