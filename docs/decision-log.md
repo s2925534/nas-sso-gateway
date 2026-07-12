@@ -134,3 +134,22 @@ enabled before any public exposure or production reliance, but not required to c
 
 **Consequences:** Keeps the MVP simple while making clear that MFA is expected before the system
 is trusted for anything beyond local testing.
+
+---
+
+## ADR-010: Pin exact image versions instead of floating tags
+
+**Context:** The MVP Compose file initially used floating tags (`latest`, `16-alpine`, `7-alpine`)
+for convenience. A floating tag means `docker compose pull` can silently move the identity
+provider, database, or cache to a new version with no review step — risky for a service that
+gates access to everything else.
+
+**Decision:** Pin `authentik`/PostgreSQL/Redis to exact versions in `docker-compose.yml` and
+`.env.example` (e.g. `2026.5.4`, `16.14-alpine`, `7.4.9-alpine`), and require deliberately bumping
+the pin — backing up first and reviewing release notes — per the procedure in
+[`docs/security-hardening.md`](security-hardening.md) ("Image Upgrade Procedure").
+
+**Consequences:** Upgrades become an explicit, reviewed action instead of a silent side effect of
+a routine pull. Trade-off: the pin needs manual maintenance over time and won't pick up security
+patches automatically — acceptable for a self-hosted, operator-controlled deployment where an
+unreviewed identity-provider upgrade is the bigger risk.

@@ -80,9 +80,10 @@ deeper, use the [official authentik docs](https://docs.goauthentik.io/).
 
 ## Upgrade Notes
 
-- Pin the authentik image tag once the MVP is stable (see `ENABLE_...` version-pinning note in
-  [`docs/future-flags.md`](future-flags.md)) rather than tracking `latest`/`2024.x` floating tags
-  indefinitely.
+- The authentik image tag is pinned to an exact version (`AUTHENTIK_TAG` in `.env`/`docker-compose.yml`)
+  rather than tracking a `latest` floating tag — see ADR-010 in
+  [`docs/decision-log.md`](decision-log.md) and the upgrade procedure in
+  [`docs/security-hardening.md`](security-hardening.md) ("Image Upgrade Procedure").
 - Read authentik's release notes before upgrading across minor versions — some releases include
   required migration steps.
 - Always back up before upgrading.

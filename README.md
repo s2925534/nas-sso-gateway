@@ -115,7 +115,7 @@ emergency bypass plan for protected apps in case the SSO admin account is ever l
 
 | Phase | Focus |
 |---|---|
-| 0 | Planning and documentation foundation (this stage) |
+| 0 | Planning and documentation foundation |
 | 1 | authentik MVP: Docker Compose, env, scripts |
 | 2 | External deployment integration readiness |
 | 3 | First SSO configuration (admin, users, MFA, first OIDC/proxy provider) |
