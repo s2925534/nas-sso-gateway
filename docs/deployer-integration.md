@@ -95,6 +95,14 @@ synology-site deploy auth.example.com \
   --port 9000
 ```
 
+- **Create the persistent bind-mount folders on the NAS before the first `deploy`.** Unlike
+  `scripts/bootstrap-sso.sh` (which runs `scripts/create-folders.sh` first), `synology-site deploy`
+  only uploads the compose/env files and runs `docker compose up -d` — it does not create
+  `${SSO_BASE_PATH}/{postgres,redis,authentik/media,authentik/custom-templates,authentik/certs,backups,logs,exports,docs}`
+  first. Without them, PostgreSQL/Redis fail to start with `Bind mount failed: ... does not exist`.
+  Create them once over SSH (`mkdir -p` each path under the NAS project folder,
+  e.g. `/volume1/docker/<slug>/data/sso/...`) before the first deploy; subsequent `deploy`/`update`
+  runs are unaffected since the folders persist.
 - Omit `--port` instead if the NAS already runs Traefik and routing is done via Docker labels
   rather than per-app port allocation (see that project's own `docs/traefik-letsencrypt.md`).
 - **Do not pass `--health-path /-/health/ready/` or `/-/health/live/`.** This tool's health check
