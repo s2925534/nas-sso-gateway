@@ -69,15 +69,29 @@ bottom.
 
 ## Phase 4: Protect First NAS Web App
 
-Blocked on a decision only you can make — which real NAS app to protect first. Nothing here is
-implemented against a real app (by design; see README "What This Project Does Not Do"). When
-you've picked one, `docs/first-sso-configuration.md` §5/§6 and
-`examples/app-integrations/` give you the concrete steps to follow.
+App chosen: `../wordpress-ai-publisher`, a custom Next.js content-publishing tool (not actually
+WordPress — it generates AI content packages and publishes them to a separate WordPress site via
+a companion plugin). It currently has zero built-in authentication on any route. See ADR-011 in
+[`docs/decision-log.md`](docs/decision-log.md) for the full reasoning below.
 
-- [ ] Select one simple internal app
-- [ ] Protect it through OIDC if native support exists
-- [ ] Otherwise protect it through reverse-proxy forward-auth
-- [ ] Document rollback and emergency bypass
+- [x] Select one simple internal app — `wordpress-ai-publisher`
+- [x] Protect it through OIDC — native OIDC (optional, env-gated) is being added directly in the
+      app itself, tracked in `../wordpress-ai-publisher/TODO.md` ("Authentication (Local
+      Credentials + Optional SSO)"), not implemented in this repo (by design; see README "What
+      This Project Does Not Do"). Forward-auth is **not** needed for this app — no reverse proxy
+      is being introduced, since Cloudflare Tunnel already routes straight to the app's existing
+      port and native OIDC needs no proxy in front.
+- [ ] This repo's own remaining piece: once a live authentik instance exists, create the OIDC
+      Provider (`provider-wordpress-ai-publisher`) and Application (restricted to group
+      `app-wordpress-ai-publisher-users`), following the existing generic pattern —
+      [`docs/oidc-integration.md`](docs/oidc-integration.md),
+      [`examples/app-integrations/generic-oidc-client.md`](examples/app-integrations/generic-oidc-client.md),
+      and the naming convention in [`docs/multi-app-rollout.md`](docs/multi-app-rollout.md). No
+      new example file is needed here — per-app specifics (exact redirect URI, issuer URL, client
+      secret location) belong in the app's own repo per that same convention, not in this one.
+- [ ] Document rollback and emergency bypass — rollback is disabling `ENABLE_OIDC_SSO` in the
+      app's own `.env` to fall back to its local username/password login; no separate break-glass
+      path is needed beyond that, since local auth never depends on authentik being reachable.
 
 ## Phase 5: Multi-App SSO Rollout
 

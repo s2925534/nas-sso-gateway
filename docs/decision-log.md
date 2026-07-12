@@ -153,3 +153,49 @@ the pin — backing up first and reviewing release notes — per the procedure i
 a routine pull. Trade-off: the pin needs manual maintenance over time and won't pick up security
 patches automatically — acceptable for a self-hosted, operator-controlled deployment where an
 unreviewed identity-provider upgrade is the bigger risk.
+
+---
+
+## ADR-011: Protect wordpress-ai-publisher via native OIDC + local credentials, not forward-auth or Cloudflare Access
+
+**Context:** Phase 4 requires picking one real NAS app to protect first. The chosen app,
+`../wordpress-ai-publisher`, is a custom Next.js content-publishing tool (not WordPress itself —
+it generates AI content packages and publishes them to a separate WordPress site via a companion
+plugin) with **zero built-in authentication on any route**, including `/api/settings`, which
+exposes/controls its OpenAI key and WordPress credentials. It's deployed via
+`../synology-site-deployer`'s `deploy` command straight to a published host port, with Cloudflare
+Tunnel routing directly to that port — no reverse proxy sits in front of it today, and none is
+currently shared across other NAS sites.
+
+Three options were considered:
+1. **Reverse-proxy forward-auth (Pattern 2)** — this repo's usual recommendation for apps with no
+   native SSO support. Rejected here because it would require standing up a new Traefik (or
+   similar) reverse-proxy layer purely for this, where none exists yet, adding real new
+   infrastructure for a single app.
+2. **Cloudflare Access (Zero Trust)** — `../synology-site-deployer` already lists this as a
+   possible future feature. Rejected because it would gate this one app behind Cloudflare's own
+   identity/policy system instead of authentik, fragmenting identity across two separate systems —
+   defeating the purpose of a single SSO gateway (see ADR-001).
+3. **Native OIDC (Pattern 1), chosen.** `wordpress-ai-publisher` is the maintainer's own codebase,
+   so adding real OIDC support is a normal, tractable code change — unlike a closed-source NAS
+   tool. Native OIDC needs no reverse proxy at all: the app's own server-side code talks to
+   authentik's issuer/token/userinfo endpoints directly, and Cloudflare Tunnel keeps routing
+   straight to the app's existing port, unchanged.
+
+**Decision:** `wordpress-ai-publisher` gets its own authentication, tracked in that repo's own
+`TODO.md` ("Authentication (Local Credentials + Optional SSO)"), not implemented in this repo (by
+design; see README "What This Project Does Not Do"): a local username/email/password login as the
+always-available default (so the app works standalone for anyone who self-hosts it with no SSO
+dependency), plus optional, env-gated OIDC against authentik. This repo's only remaining job is the
+already-generic, already-documented authentik-side step — creating an OIDC Provider/Application for
+the app once a live instance exists (see Phase 4 in `TODO.md`) — which requires no new
+functionality in this repo's own Phase 1-3 stack; creating an OIDC client for a new app is
+already-existing, generic authentik capability.
+
+**Consequences:** No new infrastructure component sits between Cloudflare, authentik, and the app.
+Identity stays centralized in authentik as intended for every future Phase 5 app, while
+`wordpress-ai-publisher` remains independently usable without this SSO gateway at all — its own
+local login is the fallback if authentik is ever unreachable, doubling as its rollback/emergency
+path (disable `ENABLE_OIDC_SSO`, log in locally). Trade-off: the auth code itself (session
+handling, password hashing, OIDC token exchange) now lives in an app this repo doesn't control or
+test — its correctness is that repo's own responsibility, tracked in its own TODO.md.
