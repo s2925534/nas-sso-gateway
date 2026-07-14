@@ -67,8 +67,28 @@ deeper, use the [official authentik docs](https://docs.goauthentik.io/).
 
 - **Directory → Users → (user) → MFA Authenticators**, or let users self-enroll from their own
   account page.
-- authentik supports TOTP and WebAuthn/passkeys; policies can require MFA per-flow or per-group
-  (Phase 6).
+- authentik supports TOTP and WebAuthn/passkeys, but this project's scope is passkey (WebAuthn)
+  only for now — see ADR-012 in [`docs/decision-log.md`](decision-log.md). Don't enroll or
+  document TOTP/SMS as an active path.
+- Policies can require MFA per-flow or per-group (Phase 6).
+
+## Creating an API Token for Automation
+
+For scripted/read-only checks against a live instance (e.g. `scripts/check-app-access.sh`)
+instead of clicking through the UI each time:
+
+- **Quick (token on your existing admin account):** top-right user menu → your account →
+  **Tokens** (or **Directory → Tokens → Create** in the admin interface). Create a token with
+  intent **API**. Store the key in `.env` as `AUTHENTIK_BOOTSTRAP_TOKEN` (already gitignored).
+- **Scoped (recommended once you have more than one automated check):** create a dedicated
+  non-superuser user (**Directory → Users → Create**, e.g. `automation`), create a **Role**
+  (**Directory → Roles** or **System → Roles**, depending on version) granting only the view
+  permissions the checks need (e.g. `authentik_core.view_application`,
+  `authentik_core.view_provider`, `authentik_core.view_group`,
+  `authentik_policies.view_policybinding`), assign that role to the user, then create its token
+  the same way. A leaked scoped token can only read, not modify or impersonate.
+- Either way, the token only needs to live in this repo's own gitignored `.env` — never commit it,
+  never paste it anywhere public.
 
 ## Backup Notes
 

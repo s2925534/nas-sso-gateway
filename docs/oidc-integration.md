@@ -3,6 +3,11 @@
 Generic reference for integrating an app with authentik via OpenID Connect (Pattern 1 in
 [`docs/app-integration-patterns.md`](app-integration-patterns.md)).
 
+**Live worked example:** `../wordpress-ai-publisher` (Phase 4, ADR-011) uses this pattern against
+this gateway — issuer `https://sso.systemsnotsilos.com/application/o/publisher/`, discovery
+document confirmed reachable. Its own OIDC client config/behavior is documented in
+`../wordpress-ai-publisher/docs/AUTHENTICATION.md`, following exactly the checklist below.
+
 ## Generic OIDC Terms
 
 | Term | Meaning |

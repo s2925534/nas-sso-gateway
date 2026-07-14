@@ -76,7 +76,16 @@ bottom.
 MFA scope decision (2026-07-14): only passkey (WebAuthn) and username/password are in scope for
 login. TOTP-authenticator-app and SMS-based MFA are explicitly deferred until asked for again or
 until there's nothing else to do. `docs/first-sso-configuration.md` §3,
-`docs/security.md`, and `docs/security-hardening.md` updated to reflect this.
+`docs/security.md`, and `docs/security-hardening.md` updated to reflect this. See ADR-012 in
+`docs/decision-log.md`.
+
+Tooling note (2026-07-15): the "unconfirmed" items above (group restriction, MFA enrollment
+status) couldn't be checked without an API token or a browser session. Added
+`scripts/check-app-access.sh` (reports per-application group/user/policy bindings) and documented
+how to create an API token in `docs/authentik-manual.md` ("Creating an API Token for Automation").
+Once `AUTHENTIK_BOOTSTRAP_TOKEN` is set in `.env`, run that script to resolve the group-restriction
+question directly. It hasn't been run against a live instance yet — verify it works as expected
+the first time, don't fully trust it blind.
 
 ## Phase 4: Protect First NAS Web App
 
@@ -103,9 +112,12 @@ a companion plugin). It currently has zero built-in authentication on any route.
       no functional benefit. Whether the `publisher` application is group-restricted or open to
       any authenticated user is unconfirmed — check **Applications → Applications → publisher →
       Access** in the authentik UI next time you're in there.
-- [ ] Document rollback and emergency bypass — rollback is disabling `ENABLE_OIDC_SSO` in the
-      app's own `.env` to fall back to its local username/password login; no separate break-glass
-      path is needed beyond that, since local auth never depends on authentik being reachable.
+- [x] Document rollback and emergency bypass — **Done**, already written into that app's own repo
+      per the per-app-docs convention: `../wordpress-ai-publisher/docs/AUTHENTICATION.md` (§"Optional
+      OIDC SSO", closing paragraph) states local login is a genuinely separate path, not a fallback
+      that depends on OIDC working, and that disabling `ENABLE_OIDC_SSO` + redeploying is the full
+      rollback — matching ADR-011's Consequences section here. No separate break-glass path is
+      needed beyond that.
 
 ## Phase 5: Multi-App SSO Rollout
 

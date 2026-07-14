@@ -199,3 +199,24 @@ local login is the fallback if authentik is ever unreachable, doubling as its ro
 path (disable `ENABLE_OIDC_SSO`, log in locally). Trade-off: the auth code itself (session
 handling, password hashing, OIDC token exchange) now lives in an app this repo doesn't control or
 test — its correctness is that repo's own responsibility, tracked in its own TODO.md.
+
+---
+
+## ADR-012: Narrow MFA scope to passkey (WebAuthn) only, defer TOTP/SMS
+
+**Context:** ADR-009 established MFA as a recommended post-MVP hardening step without picking a
+specific method, leaving `docs/first-sso-configuration.md`, `docs/security.md`, and
+`docs/security-hardening.md` to describe TOTP, WebAuthn/passkeys, and (implicitly) SMS as
+interchangeable options. The operator gave explicit direction (2026-07-14) that login should only
+ever offer two things: username/password and passkey.
+
+**Decision:** Passkey (WebAuthn) is the sole MFA/second-factor method actively documented and
+pursued. TOTP-authenticator-app and SMS-based MFA are explicitly deferred — not implemented, not
+documented as active steps — until the operator asks for them again, or until passkey + password
+work is exhausted and nothing else is queued.
+
+**Consequences:** Simpler, narrower guidance across the Phase 3/6 docs (`ENABLE_WEBAUTHN_PASSKEYS`
+is the flag that matters; `ENABLE_MFA_ENFORCEMENT` — blanket requirement, method-agnostic — remains
+a separate later step). Trade-off: passkey enrollment ties a user to a physical device/platform
+authenticator with no TOTP fallback in scope; recovery codes (already documented in
+`docs/security-hardening.md`) are the mitigation for a lost device, not a second MFA method.
