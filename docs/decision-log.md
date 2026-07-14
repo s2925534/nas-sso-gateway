@@ -215,8 +215,9 @@ pursued. TOTP-authenticator-app and SMS-based MFA are explicitly deferred — no
 documented as active steps — until the operator asks for them again, or until passkey + password
 work is exhausted and nothing else is queued.
 
-**Consequences:** Simpler, narrower guidance across the Phase 3/6 docs (`ENABLE_WEBAUTHN_PASSKEYS`
-is the flag that matters; `ENABLE_MFA_ENFORCEMENT` — blanket requirement, method-agnostic — remains
-a separate later step). Trade-off: passkey enrollment ties a user to a physical device/platform
-authenticator with no TOTP fallback in scope; recovery codes (already documented in
-`docs/security-hardening.md`) are the mitigation for a lost device, not a second MFA method.
+**Consequences:** Simpler, narrower guidance across the Phase 3/6 docs — passkey enrollment is
+active work now, not a future flag (`ENABLE_MFA_ENFORCEMENT` — blanket requirement, method-agnostic
+— remains a separate, later, future-flagged step; see `docs/future-flags.md`). Trade-off: passkey
+enrollment ties a user to a physical device/platform authenticator with no TOTP fallback in scope;
+recovery codes (already documented in `docs/security-hardening.md`) are the mitigation for a lost
+device, not a second MFA method.

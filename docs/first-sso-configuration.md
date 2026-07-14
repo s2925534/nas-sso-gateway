@@ -53,9 +53,9 @@ don't set those up as part of this step.
 2. **User icon (top right) → your account → MFA Authenticators → Enroll.**
 3. Choose **WebAuthn/passkey** (skip TOTP/SMS).
 4. Save the recovery codes authentik generates, outside of this repo, in a password manager.
-5. Do this for the admin account before any public exposure — see `ENABLE_WEBAUTHN_PASSKEYS` in
-   [`docs/future-flags.md`](future-flags.md); blanket `ENABLE_MFA_ENFORCEMENT` is still a later
-   step, not part of this pass.
+5. Do this for the admin account before any public exposure — see ADR-012 in
+   [`docs/decision-log.md`](decision-log.md); blanket `ENABLE_MFA_ENFORCEMENT` (see
+   [`docs/future-flags.md`](future-flags.md)) is still a later step, not part of this pass.
 
 Locked out after enrolling? See [`docs/troubleshooting.md`](troubleshooting.md) — "MFA Lockout".
 

@@ -55,10 +55,11 @@ session lifetime review, password policy review, and recovery codes.
 
 ## Phase 7 — Future Advanced Identity
 
-Goal: optional, later capabilities — external identity providers, passkeys/WebAuthn, LDAP, SAML,
-SCIM/user provisioning, API auth and service accounts, fine-grained roles/groups, and
-app-specific policies. Not required for the MVP; tracked as flags in
-[`docs/future-flags.md`](future-flags.md).
+Goal: optional, later capabilities — external identity providers, fully passwordless (passkey-only)
+login, LDAP, SAML, SCIM/user provisioning, API auth and service accounts, fine-grained
+roles/groups, and app-specific policies. Not required for the MVP; tracked as flags in
+[`docs/future-flags.md`](future-flags.md). Passkey/WebAuthn as a second factor is *not* here — it's
+active Phase 3/6 scope, see ADR-012 in [`docs/decision-log.md`](decision-log.md).
 
 ## Sequencing Rule
 

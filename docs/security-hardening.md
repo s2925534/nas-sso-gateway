@@ -15,8 +15,9 @@ not a generic "any authenticator" stage.
 2. Bind a passkey-required stage to your default authentication flow, or scope it to specific
    groups first (e.g. `admins`) before rolling out to everyone.
 3. Test with a non-admin test account before enforcing broadly, so you don't lock yourself out.
-4. Tracked as `ENABLE_MFA_ENFORCEMENT` / `ENABLE_WEBAUTHN_PASSKEYS` in
-   [`docs/future-flags.md`](future-flags.md).
+4. Blanket enforcement is tracked as `ENABLE_MFA_ENFORCEMENT` in
+   [`docs/future-flags.md`](future-flags.md); passkey itself is active scope, not a future flag —
+   see ADR-012 in [`docs/decision-log.md`](decision-log.md).
 
 ## Admin Account Separation
 

@@ -10,7 +10,7 @@ unless a specific env var already exists for one (e.g. `PUBLIC_EXPOSURE`, `DEPLO
 | `ENABLE_DEPLOYER_DOMAIN_MANAGEMENT` | Allow an external deployment tool of your choice (e.g. `../synology-site-deployer`, or any reverse-proxy/tunnel tooling) to manage DNS, Cloudflare, tunnel, reverse proxy, certs, and hostname exposure for this service. |
 | `ENABLE_PUBLIC_AUTH_DOMAIN` | Expose authentik at your chosen `SSO_DOMAIN` (e.g. `auth.example.com`) through whatever external tooling you use. |
 | `ENABLE_MFA_ENFORCEMENT` | Require MFA for all users, or for selected groups. |
-| `ENABLE_WEBAUTHN_PASSKEYS` | Support WebAuthn/passkeys as a stronger authentication method. |
+| `ENABLE_PASSWORDLESS_LOGIN` | Let passkeys/WebAuthn replace password entry entirely as the first factor (not just as a second factor), if ever needed. |
 | `ENABLE_OIDC_APP_TEMPLATES` | Create reusable templates for adding OIDC clients to future apps. |
 | `ENABLE_PROXY_AUTH_TEMPLATES` | Create reusable forward-auth templates for apps without OIDC support. |
 | `ENABLE_APP_PORTAL` | Use authentik as an app launcher/portal for NAS apps. |
@@ -27,6 +27,11 @@ unless a specific env var already exists for one (e.g. `PUBLIC_EXPOSURE`, `DEPLO
 | `ENABLE_PORTABLE_LOCAL_SSO_LAB` | Allow this SSO lab to run locally on any computer for testing, fully decoupled from the NAS. |
 
 See [`docs/phase-plan.md`](phase-plan.md) for which phase each of these belongs to.
+
+Note: passkey (WebAuthn) as a **second factor** alongside username/password is active Phase 3/6
+scope, not a future flag — see ADR-012 in [`docs/decision-log.md`](decision-log.md). Only
+passwordless (passkey-only, no password) login is future-flagged here, as
+`ENABLE_PASSWORDLESS_LOGIN`.
 
 Image version pinning (previously listed here) is done — `docker-compose.yml` and `.env.example`
 now pin exact authentik/PostgreSQL/Redis versions, with the upgrade procedure documented in

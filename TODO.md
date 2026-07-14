@@ -149,13 +149,14 @@ out against a running instance (requires Docker, not available in this environme
 
 Intentionally documentation-only for now (per project rules: document future capabilities instead
 of implementing them ahead of need). Tracked as flags in `docs/future-flags.md`
-(`ENABLE_EXTERNAL_IDENTITY_PROVIDERS`, `ENABLE_WEBAUTHN_PASSKEYS`, `ENABLE_LDAP_SUPPORT`,
+(`ENABLE_EXTERNAL_IDENTITY_PROVIDERS`, `ENABLE_PASSWORDLESS_LOGIN`, `ENABLE_LDAP_SUPPORT`,
 `ENABLE_SAML_SUPPORT`, `ENABLE_API_AUTH_GATEWAY`, `ENABLE_SERVICE_ACCOUNTS`,
 `ENABLE_GROUP_BASED_ACCESS`, `ENABLE_BACKUP_AUTOMATION`, `ENABLE_PORTABLE_LOCAL_SSO_LAB`). No
-further action planned until a real need arises.
+further action planned until a real need arises. (Passkey/WebAuthn as a second factor is Phase 3/6
+scope, not here — see ADR-012.)
 
 - [ ] External identity providers
-- [ ] Passkeys/WebAuthn
+- [ ] Fully passwordless (passkey-only) login
 - [ ] LDAP if needed
 - [ ] SAML if needed
 - [ ] SCIM/user provisioning if needed

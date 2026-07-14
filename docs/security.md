@@ -40,9 +40,9 @@ own laptop.
   TOTP-authenticator-app and SMS-based MFA are deferred until asked for again — don't build those
   out.
 - Enable passkey MFA for the admin account before any public exposure, and for all users before
-  relying on the system in production (Phase 3/6, tracked as `ENABLE_WEBAUTHN_PASSKEYS` in
-  [`docs/future-flags.md`](future-flags.md); blanket enforcement via `ENABLE_MFA_ENFORCEMENT` is a
-  separate, later step).
+  relying on the system in production (Phase 3/6 — active scope, see ADR-012 in
+  [`docs/decision-log.md`](decision-log.md)); blanket enforcement via `ENABLE_MFA_ENFORCEMENT` (see
+  [`docs/future-flags.md`](future-flags.md)) is a separate, later step.
 - MFA is not required to complete the local MVP, but treat it as a hard requirement before
   `PUBLIC_EXPOSURE=true`.
 
