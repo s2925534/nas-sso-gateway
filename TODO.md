@@ -87,23 +87,35 @@ Once `AUTHENTIK_BOOTSTRAP_TOKEN` is set in `.env`, run that script to resolve th
 question directly. It hasn't been run against a live instance yet — verify it works as expected
 the first time, don't fully trust it blind.
 
-**Incident (2026-07-14/15, discovered and resolved on its own during this session):** the live
-instance was unreachable (502 via the tunnel) when checked. Diagnosed via
-`../synology-site-deployer`'s read-only `logs`/`ps` commands (no Docker access from this sandbox
-otherwise): the NAS's Docker daemon went unreachable around `14:13:52Z` on 2026-07-14 (Watchtower's
-own log shows "Cannot connect to the Docker daemon" followed by a fatal panic in its own cron job),
-taking down `sso-authentik-server`, `sso-postgresql`, `sso-redis`, the Supabase stack, and
-Watchtower itself — `cloudflared` stayed up the whole time and correctly 502'd since it couldn't
-reach any of those origins. Everything came back on its own via container restart policies around
-`20:42-20:46Z` (~6.5 hours later) — authentik's own worker log shows a 318-second startup
-("`took_s`": 318.5) before it was internally healthy again. No action was taken here beyond
-read-only diagnosis; verified recovered afterward (`sso.systemsnotsilos.com` → 302,
-`publisher.veloso.dev` → 307, OIDC discovery → 200). Root cause of the *original* Docker daemon
-outage is not determined — that's DSM/Synology-level, outside what container logs show. Worth
-checking DSM's own system log / Docker package status / any update-triggered restart when next at
-the NAS, and worth considering whether existing NAS monitoring (there's an `uptime-kuma` bootstrap
-command in `../synology-site-deployer` — unclear if it's actually deployed/watching this) should
-have alerted on a 6.5-hour outage and didn't.
+**Incident (2026-07-14/15, ongoing/unresolved as of this session — read below before trusting the
+"healthy" status elsewhere in this doc):** the live instance was unreachable (502 via the tunnel)
+when checked. Diagnosed via `../synology-site-deployer`'s read-only `logs`/`ps` commands (no Docker
+access from this sandbox otherwise): the NAS's Docker daemon went unreachable around `14:13:52Z` on
+2026-07-14 (Watchtower's own log shows "Cannot connect to the Docker daemon" followed by a fatal
+panic in its own cron job), taking down `sso-authentik-server`, `sso-postgresql`, `sso-redis`, the
+Supabase stack, and Watchtower itself — `cloudflared` stayed up the whole time and correctly 502'd
+since it couldn't reach any of those origins. Everything came back on its own via container restart
+policies around `20:42-20:46Z` (~6.5 hours later) — authentik's own worker log shows a 318-second
+startup ("`took_s`": 318.5) before it was internally healthy again. Verified recovered at that point
+(`sso.systemsnotsilos.com` → 302, `publisher.veloso.dev` → 307, OIDC discovery → 200).
+
+**Then it went down again, worse, ~30 minutes later (2026-07-14T21:12Z):** `synology-site
+check-nas` (SSH to the NAS itself still fully reachable, so the NAS/OS is up) showed the running
+container count drop from 37 to 1, and it stayed stuck at 1 for 2+ minutes of polling rather than
+climbing back like the first cycle did. `synology-site ps` showed this is **host-wide, not
+SSO-specific** — every project's containers exited around the same time (`au-address-*`, `zqx-*`,
+`uptime-kuma`, `resilinked-*`, plus this stack), with exit codes 137 (SIGKILL — consistent with
+OOM-kill or a forced daemon restart), 143 (SIGTERM), and 0. Reads as the NAS's Docker/Container
+Manager service itself being unstable (resource exhaustion or a DSM-level restart loop), not
+anything wrong with this repo's stack or anything done in this session — only read-only
+`check-nas`/`ps`/`logs` were ever run against the NAS; no `deploy`/`restart`/`stop` command was
+issued. There is a live `uptime-kuma` container on this NAS — worth checking its dashboard/alert
+history once things stabilize, since an outage this long should have triggered something.
+
+This is beyond what's diagnosable or fixable from a sandboxed session with no DSM/host-level access
+(no disk/memory visibility, no ability to restart the Container Manager package itself). Left as-is
+rather than polling further — needs the operator's own attention at the NAS (DSM system log,
+Container Manager status, storage/memory usage) next time they're at it.
 
 ## Phase 4: Protect First NAS Web App
 
