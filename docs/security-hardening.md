@@ -6,12 +6,17 @@ any app in Phase 4/5 becomes something you'd be upset to lose access to.
 
 ## MFA Enforcement
 
+Scope: passkey (WebAuthn) is the only MFA method in use. TOTP-authenticator-app and SMS are
+deferred until asked for again — the steps below should only ever bind/require a passkey stage,
+not a generic "any authenticator" stage.
+
 1. **Directory → Policies → Create → Password Policy / Authenticator Validation Policy**, or use
-   authentik's per-flow MFA stage binding.
-2. Bind an MFA-required stage to your default authentication flow, or scope it to specific groups
-   first (e.g. `admins`) before rolling out to everyone.
+   authentik's per-flow MFA stage binding, scoped to WebAuthn/passkey specifically.
+2. Bind a passkey-required stage to your default authentication flow, or scope it to specific
+   groups first (e.g. `admins`) before rolling out to everyone.
 3. Test with a non-admin test account before enforcing broadly, so you don't lock yourself out.
-4. Tracked as `ENABLE_MFA_ENFORCEMENT` in [`docs/future-flags.md`](future-flags.md).
+4. Tracked as `ENABLE_MFA_ENFORCEMENT` / `ENABLE_WEBAUTHN_PASSKEYS` in
+   [`docs/future-flags.md`](future-flags.md).
 
 ## Admin Account Separation
 

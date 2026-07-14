@@ -59,13 +59,24 @@ against a running instance — Docker was not available in the environment this 
 the guide is ready but unexecuted. Run it via `scripts/bootstrap-sso.sh`, then work the doc top to
 bottom.
 
-- [ ] First admin account setup (guide ready: `docs/first-sso-configuration.md` §1)
-- [ ] First normal user setup (guide ready: §2)
-- [ ] MFA recommendation applied (guide ready: §3)
-- [ ] First OIDC provider/client example (guide ready: §5)
-- [ ] First proxy provider example (guide ready: §6)
-- [ ] App portal example (guide ready: §7)
-- [ ] Group and role examples (guide ready: §4)
+- [x] First admin account setup — implied done (verified 2026-07-14: a real OIDC provider/app
+      exists live in authentik for `publisher.veloso.dev`, which requires having logged in as
+      admin at least once; see Phase 4)
+- [ ] First normal user setup (guide ready: §2) — unconfirmed whether a separate day-to-day
+      account exists yet, or whether the admin account is still being used for everything
+- [ ] MFA recommendation applied (guide ready: §3, scope narrowed — see below) — unconfirmed
+- [x] First OIDC provider/client example — superseded by the real one for `publisher` (Phase 4);
+      no separate placeholder example needed
+- [ ] First proxy provider example (guide ready: §6) — not needed for the current app (no
+      forward-auth in use), low priority
+- [ ] App portal example (guide ready: §7) — unconfirmed
+- [ ] Group and role examples (guide ready: §4) — unconfirmed whether `publisher` is
+      group-restricted (see Phase 4 note)
+
+MFA scope decision (2026-07-14): only passkey (WebAuthn) and username/password are in scope for
+login. TOTP-authenticator-app and SMS-based MFA are explicitly deferred until asked for again or
+until there's nothing else to do. `docs/first-sso-configuration.md` §3,
+`docs/security.md`, and `docs/security-hardening.md` updated to reflect this.
 
 ## Phase 4: Protect First NAS Web App
 
@@ -81,14 +92,17 @@ a companion plugin). It currently has zero built-in authentication on any route.
       This Project Does Not Do"). Forward-auth is **not** needed for this app — no reverse proxy
       is being introduced, since Cloudflare Tunnel already routes straight to the app's existing
       port and native OIDC needs no proxy in front.
-- [ ] This repo's own remaining piece: once a live authentik instance exists, create the OIDC
-      Provider (`provider-wordpress-ai-publisher`) and Application (restricted to group
-      `app-wordpress-ai-publisher-users`), following the existing generic pattern —
-      [`docs/oidc-integration.md`](docs/oidc-integration.md),
-      [`examples/app-integrations/generic-oidc-client.md`](examples/app-integrations/generic-oidc-client.md),
-      and the naming convention in [`docs/multi-app-rollout.md`](docs/multi-app-rollout.md). No
-      new example file is needed here — per-app specifics (exact redirect URI, issuer URL, client
-      secret location) belong in the app's own repo per that same convention, not in this one.
+- [x] This repo's own remaining piece: create the OIDC Provider and Application against the live
+      authentik instance. **Done** (verified 2026-07-14: `publisher.veloso.dev`'s
+      `infra/web/.env` has `ENABLE_OIDC_SSO=true` with real issuer/client id/secret, and
+      `https://sso.systemsnotsilos.com/application/o/publisher/.well-known/openid-configuration`
+      resolves live). Actual application slug is `publisher`, not the originally planned
+      `provider-wordpress-ai-publisher` / `app-wordpress-ai-publisher-users` naming from
+      [`docs/multi-app-rollout.md`](docs/multi-app-rollout.md) — left as-is since it's live and
+      working; renaming would mean recreating the provider/app and updating the redirect URI for
+      no functional benefit. Whether the `publisher` application is group-restricted or open to
+      any authenticated user is unconfirmed — check **Applications → Applications → publisher →
+      Access** in the authentik UI next time you're in there.
 - [ ] Document rollback and emergency bypass — rollback is disabling `ENABLE_OIDC_SSO` in the
       app's own `.env` to fall back to its local username/password login; no separate break-glass
       path is needed beyond that, since local auth never depends on authentik being reachable.

@@ -45,12 +45,17 @@ If you get locked out before rotating it, see [`docs/troubleshooting.md`](troubl
 
 ## 3. Enable MFA
 
+Scope decision: only passkey (WebAuthn) and username/password are in scope for login right now.
+TOTP-authenticator-app and SMS-based MFA are intentionally out of scope until asked for again —
+don't set those up as part of this step.
+
 1. Log in as the account you want to protect (admin first, then your normal user).
 2. **User icon (top right) → your account → MFA Authenticators → Enroll.**
-3. Choose TOTP (any authenticator app) or WebAuthn/passkey if your device supports it.
+3. Choose **WebAuthn/passkey** (skip TOTP/SMS).
 4. Save the recovery codes authentik generates, outside of this repo, in a password manager.
-5. Do this for the admin account before any public exposure — see `ENABLE_MFA_ENFORCEMENT` in
-   [`docs/future-flags.md`](future-flags.md) for later blanket enforcement.
+5. Do this for the admin account before any public exposure — see `ENABLE_WEBAUTHN_PASSKEYS` in
+   [`docs/future-flags.md`](future-flags.md); blanket `ENABLE_MFA_ENFORCEMENT` is still a later
+   step, not part of this pass.
 
 Locked out after enrolling? See [`docs/troubleshooting.md`](troubleshooting.md) — "MFA Lockout".
 
