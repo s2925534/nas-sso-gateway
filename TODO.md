@@ -87,6 +87,24 @@ Once `AUTHENTIK_BOOTSTRAP_TOKEN` is set in `.env`, run that script to resolve th
 question directly. It hasn't been run against a live instance yet — verify it works as expected
 the first time, don't fully trust it blind.
 
+**Incident (2026-07-14/15, discovered and resolved on its own during this session):** the live
+instance was unreachable (502 via the tunnel) when checked. Diagnosed via
+`../synology-site-deployer`'s read-only `logs`/`ps` commands (no Docker access from this sandbox
+otherwise): the NAS's Docker daemon went unreachable around `14:13:52Z` on 2026-07-14 (Watchtower's
+own log shows "Cannot connect to the Docker daemon" followed by a fatal panic in its own cron job),
+taking down `sso-authentik-server`, `sso-postgresql`, `sso-redis`, the Supabase stack, and
+Watchtower itself — `cloudflared` stayed up the whole time and correctly 502'd since it couldn't
+reach any of those origins. Everything came back on its own via container restart policies around
+`20:42-20:46Z` (~6.5 hours later) — authentik's own worker log shows a 318-second startup
+("`took_s`": 318.5) before it was internally healthy again. No action was taken here beyond
+read-only diagnosis; verified recovered afterward (`sso.systemsnotsilos.com` → 302,
+`publisher.veloso.dev` → 307, OIDC discovery → 200). Root cause of the *original* Docker daemon
+outage is not determined — that's DSM/Synology-level, outside what container logs show. Worth
+checking DSM's own system log / Docker package status / any update-triggered restart when next at
+the NAS, and worth considering whether existing NAS monitoring (there's an `uptime-kuma` bootstrap
+command in `../synology-site-deployer` — unclear if it's actually deployed/watching this) should
+have alerted on a 6.5-hour outage and didn't.
+
 ## Phase 4: Protect First NAS Web App
 
 App chosen: `../wordpress-ai-publisher`, a custom Next.js content-publishing tool (not actually
