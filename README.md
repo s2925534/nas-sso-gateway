@@ -122,7 +122,7 @@ emergency bypass plan for protected apps in case the SSO admin account is ever l
 | 4 | Protect first NAS web app |
 | 5 | Multi-app SSO rollout |
 | 6 | Security hardening |
-| 7 | Future advanced identity (passkeys, LDAP, SAML, SCIM, service accounts) |
+| 7 | Future advanced identity (passwordless login, LDAP, SAML, SCIM, service accounts) |
 
 Full breakdown: [`docs/phase-plan.md`](docs/phase-plan.md) and [`TODO.md`](TODO.md).
 
