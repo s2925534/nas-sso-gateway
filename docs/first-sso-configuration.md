@@ -124,6 +124,31 @@ Respecting Headers".
 Stuck in a login loop, or the wrong external URL shows up? See
 [`docs/troubleshooting.md`](troubleshooting.md) — "Login Loop", "Incorrect External URL".
 
+## 8. Password Reset (Recovery Flow)
+
+1. **System → Brands → (edit the active brand) → Recovery flow → `default-recovery-flow`.**
+2. If your version exposes it separately, also set the Identification stage's own Recovery flow
+   field on `default-authentication-flow` (Flows & Stages → Flows → that flow → Stage Bindings →
+   Identification stage → Edit Stage) to the same flow.
+3. Set the `AUTHENTIK_EMAIL__*` variables in `.env` to a real SMTP relay and restart the stack, so
+   the flow can actually deliver reset links — without it, only the admin-triggered "Send recovery
+   link" path (Step 2 above) works.
+4. Log out and confirm "Forgot password?" appears on the login page and completes a real reset.
+
+Full detail: [`docs/authentik-manual.md`](authentik-manual.md), "Password Reset (Recovery Flow)".
+See also ADR-013 in [`docs/decision-log.md`](decision-log.md).
+
+## 9. Branding ("Systems Not Silos")
+
+1. **System → Brands → (edit the active brand).** Set **Branding title** to `Systems Not Silos`
+   and clear **Default flow background** to remove authentik's stock login-page image.
+2. Leave **Logo**/**Favicon** unset until a real "Systems Not Silos" asset is supplied — don't
+   commit brand images into this repo (see ADR-013).
+3. Confirm the login page shows the new title and no default authentik imagery.
+
+Full detail: [`docs/authentik-manual.md`](authentik-manual.md), "Branding (Login Page /
+\"Systems Not Silos\")".
+
 ## What This Guide Does Not Do
 
 - It does not protect a real production app — that's Phase 4, and requires you to pick a specific

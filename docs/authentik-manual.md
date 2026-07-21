@@ -72,6 +72,56 @@ deeper, use the [official authentik docs](https://docs.goauthentik.io/).
   document TOTP/SMS as an active path.
 - Policies can require MFA per-flow or per-group (Phase 6).
 
+## Password Reset (Recovery Flow)
+
+authentik ships a built-in `default-recovery-flow` (Identification → email/verification →
+Prompt-for-new-password → User Write) that isn't wired up to the login page out of the box. To
+surface a working "Forgot password?" option:
+
+1. **System → Brands → (edit the active brand).** Set **Recovery flow** to `default-recovery-flow`
+   (or a custom recovery flow if you've built one). This is what puts the link on the login page.
+2. Also check **Flows & Stages → Flows → `default-authentication-flow` → Stage Bindings →
+   (Identification stage) → Edit Stage.** Some authentik versions read the "Forgot password?" link
+   from the Identification stage's own **Recovery flow** field rather than (or in addition to) the
+   Brand-level one — set it there too if present, so the link shows regardless of version. Verify
+   against your actual running version; this repo can't confirm the exact behavior without a live
+   instance.
+3. **Email delivery is required for self-service reset to actually work.** Set the
+   `AUTHENTIK_EMAIL__*` variables in `.env` (see `.env.example`) to a real SMTP relay, then restart
+   the stack. Without SMTP configured, the Recovery flow exists but has nothing to deliver the reset
+   link with.
+4. **No SMTP yet, or need to reset one user right now?** Use the existing admin-triggered path:
+   **Directory → Users → (user) → "Send recovery link"** (already used for first-time account setup
+   in `docs/first-sso-configuration.md` §2) — copies a one-time recovery URL you hand to the user
+   directly. This works with or without SMTP configured.
+5. Test end-to-end once SMTP is set: log out, click "Forgot password?" on the login page, confirm
+   the email arrives, and confirm the link actually resets the password.
+
+See ADR-013 in [`docs/decision-log.md`](decision-log.md) for why this is done via authentik's
+built-in flow rather than custom code — there's no bespoke login frontend in this repo to add a
+"reset password" button to.
+
+## Branding (Login Page / "Systems Not Silos")
+
+authentik's login/flow-executor UI is themed per-**Brand** (`System → Brands → edit the active
+brand`), not by editing frontend source in this repo — there is none. Fields available (2025.4.0+,
+already satisfied by the pinned `AUTHENTIK_TAG`):
+
+1. **Branding title** — set to `Systems Not Silos`. Shown in the browser tab and flow-executor UI.
+2. **Default flow background** — clear/remove this to strip authentik's stock background image
+   from the login page. Leave empty for a plain background, or upload a replacement once you have
+   one (see below).
+3. **Logo** / **Favicon** — no "Systems Not Silos" logo or favicon asset was available in this repo
+   or any sibling project as of this writing. Left unset (text-only branding via the title) until a
+   real asset is supplied — upload it through the same Brand edit screen's file picker when you have
+   one. Don't commit brand image assets into this repo; they live in authentik's own media storage
+   per-deployment, consistent with the domain-generic policy below.
+4. **Custom CSS** — optional, for further tweaks beyond title/logo/background (colors, spacing).
+   Add sparingly; heavy custom CSS is easy to break across authentik upgrades.
+
+This intentionally does **not** add the veloso.dev binary-dot signature used elsewhere — see
+ADR-013 in [`docs/decision-log.md`](decision-log.md).
+
 ## Creating an API Token for Automation
 
 For scripted/read-only checks against a live instance (e.g. `scripts/check-app-access.sh`)
