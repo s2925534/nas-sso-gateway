@@ -17,13 +17,19 @@ branding/customization work is merged into `main` (PR #2).
       (system/light/dark) and confirmation the post-login interface's theme is unaffected — that
       isolation is the whole point of this design and hasn't been eyeballed yet, only source- and
       curl-verified.
-- [ ] **Deploy the corrected footer CSS** (`docs/authentik-manual.md`, "Footer Links") — NOT yet
-      applied. Live-checked 2026-07-22: the login page still shows the literal "Powered by
-      authentik" text and the live custom CSS still contains the old spec-invalid
-      `::part(footer)` rule. This is a separate action from the template deploy above (it's a
-      **System → Brands → edit the active brand → Custom CSS** admin-UI/API edit, not a file
-      copy) and wasn't in scope of what was authorized for the SSH session that did the template
-      deploy — needs its own explicit go-ahead.
+- [x] **Deploy the corrected footer CSS** (`docs/authentik-manual.md`, "Footer Links") — done
+      2026-07-22 via `ak shell` over SSH (the one Brand record, `Brand.objects.get(default=True)`,
+      `branding_custom_css` updated in place; no admin-UI session available, so this went through
+      the Django ORM directly instead). Verified live by re-fetching the login page: the old
+      spec-invalid `::part(footer) li:...` rule is gone, the corrected `ak-brand-links` selectors
+      are present, and the theme-toggle CSS is present too (`grep` confirmed, not a browser
+      screenshot). "Powered by authentik" is still in the DOM (expected — the field can't be
+      removed at the data layer) but is now `display: none`, which also removes it from the
+      accessibility tree, not just visually.
+- [ ] **Real browser check, both fixes** — nobody has looked at this in an actual browser yet.
+      Confirm: "Powered by authentik" is actually hidden, the veloso.dev dot signature actually
+      renders, the theme toggle button appears and cycles through all three states, and the
+      post-login interface's own theme is unaffected by the login-page toggle.
 - [ ] **Re-check the "title only visible on hover" report** — live, with devtools closed. Source
       review found no CSS/native mechanism that would cause it (see `docs/authentik-manual.md`,
       "Flow Title, Logo Position..."); don't ship a speculative CSS fix for this without seeing it
