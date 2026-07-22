@@ -6,27 +6,30 @@ full description of each phase.
 ## Current Priorities (updated 2026-07-22)
 
 Top of the queue right now, ahead of the older unconfirmed Phase 3/6 items below. This
-branding/customization work is merged into `main` (PR #2) but **not yet applied to the live
-instance** (no Docker/live access from the sandbox/cloud routine this was authored in) — items
-1-3 below need the operator's own hands on the NAS:
+branding/customization work is merged into `main` (PR #2).
 
-1. **Deploy the corrected footer CSS** (`docs/authentik-manual.md`, "Footer Links") — the
-   previously-live `::part(footer) li:...` rules are spec-invalid (confirmed via the CSS Shadow
-   Parts spec) and were likely doing nothing; paste the corrected `ak-brand-links li:...` block
-   into **System → Brands → edit the active brand → Custom CSS**, then confirm live that "Powered
-   by authentik" is actually hidden and the veloso.dev dot signature actually renders.
-2. **Deploy the login-page-only theme toggle** (ADR-014 in `docs/decision-log.md`) — copy
-   [`authentik-custom-templates/if/flow.html`](authentik-custom-templates/if/flow.html) to
-   `${SSO_BASE_PATH}/authentik/custom-templates/if/flow.html`, paste the toggle's CSS into the same
-   Custom CSS field, restart `authentik-server`/`authentik-worker`, then click through all three
-   states (system/light/dark) **and separately confirm the post-login interface's own theme is
-   unaffected** — that isolation is the whole point of this design, verify it actually holds.
-3. **Re-check the "title only visible on hover" report** — live, with devtools closed. Source
-   review found no CSS/native mechanism that would cause it (see `docs/authentik-manual.md`, "Flow
-   Title, Logo Position..."); don't ship a speculative CSS fix for this without seeing it reproduce.
-4. Everything in Phase 3/6 below that was already queued before this session remains queued —
-   this branding work doesn't supersede it, just sits ahead of it since it's freshly written and
-   unverified.
+- [x] **Deploy the login-page-only theme toggle template** (ADR-014) — `authentik-custom-templates/if/flow.html`
+      was copied to the live NAS (`/volume1/docker/sso-systemsnotsilos-com/data/sso/authentik/custom-templates/if/flow.html`)
+      via SSH (synology-site-deployer credentials), and `sso-authentik-server`/`sso-authentik-worker`
+      were restarted. Verified live: both containers report `(healthy)`, the login page returns
+      HTTP 200, and the served HTML contains `sns-theme-toggle` — the template override is
+      confirmed active. **Still needs a real browser click-through** of all three states
+      (system/light/dark) and confirmation the post-login interface's theme is unaffected — that
+      isolation is the whole point of this design and hasn't been eyeballed yet, only source- and
+      curl-verified.
+- [ ] **Deploy the corrected footer CSS** (`docs/authentik-manual.md`, "Footer Links") — NOT yet
+      applied. Live-checked 2026-07-22: the login page still shows the literal "Powered by
+      authentik" text and the live custom CSS still contains the old spec-invalid
+      `::part(footer)` rule. This is a separate action from the template deploy above (it's a
+      **System → Brands → edit the active brand → Custom CSS** admin-UI/API edit, not a file
+      copy) and wasn't in scope of what was authorized for the SSH session that did the template
+      deploy — needs its own explicit go-ahead.
+- [ ] **Re-check the "title only visible on hover" report** — live, with devtools closed. Source
+      review found no CSS/native mechanism that would cause it (see `docs/authentik-manual.md`,
+      "Flow Title, Logo Position..."); don't ship a speculative CSS fix for this without seeing it
+      reproduce.
+- Everything in Phase 3/6 below that was already queued before this session remains queued — this
+  branding work doesn't supersede it, just sits ahead of it.
 
 ## Phase 0: Planning and Documentation Foundation
 
