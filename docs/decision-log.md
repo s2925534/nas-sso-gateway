@@ -388,3 +388,9 @@ contact-form CSS are pushed live only *after* the service is actually deployed a
 "Deployment sequence" in `docs/authentik-manual.md`, "Contact Support Form". As with `contact-relay`
 itself, its own SMTP credentials (`CONTACT_EMAIL__*`) are kept separate from authentik's
 (`AUTHENTIK_EMAIL__*`) so rotating one relay's credentials can never silently break the other.
+
+**Update, 2026-07-22:** the container is deployed and running (`sso-contact-relay`, healthy,
+`/health` returns `200` on the NAS's own loopback). `CONTACT_EMAIL__*` (SMTP) was left unset,
+identical to `AUTHENTIK_EMAIL__*`'s current state — no real relay credentials exist yet, so
+`/send` will 502 on every call until they're added. The footer link/CSS are still deliberately not
+live. See TODO.md for the remaining steps.

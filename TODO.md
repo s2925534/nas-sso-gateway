@@ -45,20 +45,27 @@ branding/customization work is merged into `main` (PR #2).
       HTML, but nobody has actually clicked it yet to confirm all three states (system/light/dark)
       render correctly and that the post-login interface's own theme is unaffected — that isolation
       is the whole point of this design and still hasn't been exercised, only inspected.
-- [x] **Contact Support form — code written, committed, NOT deployed** (ADR-017) — `contact-relay/`
-      (Flask, this repo's first bespoke service), `docker-compose.yml` service definition,
+- [x] **Contact Support form — code written and pushed** (ADR-017) — `contact-relay/` (Flask,
+      this repo's first bespoke service), `docker-compose.yml` service definition,
       `.github/workflows/contact-relay-publish.yml` (GHCR CI), `.env.example` vars, and the
-      form/JS in `authentik-custom-templates/if/flow.html` are all written and pushed to `main`.
-      Deliberately **not yet live** — see "Deployment sequence" in `docs/authentik-manual.md`,
-      "Contact Support Form". Remaining steps, in order:
-  - [ ] Set real `CONTACT_ADMIN_EMAIL`, `CONTACT_ALLOWED_ORIGIN`, `CONTACT_EMAIL__*` in `.env` on
-        the NAS
-  - [ ] `docker compose up -d contact-relay` (needs the CI-built GHCR image to exist first — should
-        be automatic after the push to `main`, but not confirmed)
-  - [ ] Route a reverse-proxy/tunnel path at `CONTACT_RELAY_PORT` (default `9001`) — outside this
-        repo's scope, same as every other app in this ecosystem (ADR-003)
+      form/JS in `authentik-custom-templates/if/flow.html` are all merged to `main`. CI confirmed
+      green — `ghcr.io/s2925534/nas-sso-gateway-contact-relay:latest` built and pushed successfully.
+- [x] **`contact-relay` deployed to the NAS** — done 2026-07-22 via SSH (synology-site-deployer
+      credentials): live `docker-compose.yml` synced from this repo (diffed empty after upload —
+      confirms nothing else had drifted), `.env` updated with `CONTACT_ADMIN_EMAIL` (
+      `admin@systemsnotsilos.com`) and `CONTACT_ALLOWED_ORIGIN` (`https://sso.systemsnotsilos.com`),
+      container started and confirmed `(healthy)`, `/health` returns `200` on `127.0.0.1:9001` on
+      the NAS itself. **`CONTACT_EMAIL__*` (SMTP) were deliberately left blank** — nobody has real
+      SMTP relay credentials to put there yet (same unconfigured state as `AUTHENTIK_EMAIL__*` for
+      password reset). The container runs fine, but every actual send attempt will fail with a
+      `502` until real SMTP values are set.
+  - [ ] Set real `CONTACT_EMAIL__HOST`/`PORT`/`USERNAME`/`PASSWORD`/`FROM` in `.env` on the NAS —
+        the whole feature is a no-op without this
+  - [ ] Route a reverse-proxy/tunnel path at `CONTACT_RELAY_PORT` (`9001`) so it's reachable from
+        outside the NAS — outside this repo's scope, same as every other app in this ecosystem
+        (ADR-003); right now the service only answers on `127.0.0.1` on the NAS itself
   - [ ] Update `authentik-custom-templates/if/flow.html`'s `RELAY_ENDPOINT` constant to match
-        whatever path/host you actually routed
+        whatever path/host you actually routed, then redeploy the template
   - [ ] Only then: update the live Tenant's `footer_links` ("Contact Support (coming soon)" →
         "Contact Support", add `href`) and push the contact-form CSS to the Brand's Custom CSS field
   - [ ] Test end-to-end: submit the form, confirm the email arrives, confirm reply-to works,
