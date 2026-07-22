@@ -5,9 +5,10 @@ full description of each phase.
 
 ## Current Priorities (updated 2026-07-22)
 
-Top of the queue right now, ahead of the older unconfirmed Phase 3/6 items below — this is
-branding/customization work written and committed this session but **not yet applied to the live
-instance** (no Docker/live access from the sandbox this was authored in):
+Top of the queue right now, ahead of the older unconfirmed Phase 3/6 items below. This
+branding/customization work is merged into `main` (PR #2) but **not yet applied to the live
+instance** (no Docker/live access from the sandbox/cloud routine this was authored in) — items
+1-3 below need the operator's own hands on the NAS:
 
 1. **Deploy the corrected footer CSS** (`docs/authentik-manual.md`, "Footer Links") — the
    previously-live `::part(footer) li:...` rules are spec-invalid (confirmed via the CSS Shadow
