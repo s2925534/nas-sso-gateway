@@ -221,3 +221,68 @@ active work now, not a future flag (`ENABLE_MFA_ENFORCEMENT` — blanket require
 enrollment ties a user to a physical device/platform authenticator with no TOTP fallback in scope;
 recovery codes (already documented in `docs/security-hardening.md`) are the mitigation for a lost
 device, not a second MFA method.
+
+---
+
+## ADR-013: Add the veloso.dev binary-dot signature to the login footer, as an explicit exception to the domain-generic policy
+
+**Context:** This repo has a longstanding, deliberate policy of staying domain-generic — no
+`veloso.dev` references anywhere except the README's "Developer / Contact" line — so the repo
+stays reusable by other operators and doesn't hardcode a brand that isn't this deployment's own
+(`Systems Not Silos`, at `sso.systemsnotsilos.com`). Separately, the operator's standard convention
+(see global frontend conventions) requires a veloso.dev binary-dot signature on every frontend page
+and app, including client/contract work. These two policies conflict for this project's login page.
+
+**Decision:** The operator explicitly overrode the domain-generic policy for this one element: the
+login page's footer carries a veloso.dev binary-dot signature (80-bit ASCII-to-binary encoding of
+"veloso.dev", rendered as CSS `box-shadow` dots), added as a minimal `"·"` entry in the Tenant's
+`footer_links` alongside the "Powered by Systems Not Silos" and contact-form entries (see
+`docs/authentik-manual.md`, "Footer Links"). The rest of the repo's domain-generic policy is
+unchanged — this is a narrow, deployment-side branding exception, not a reversal of the policy.
+
+**Consequences:** The signature lives in live Tenant/Brand configuration (set via `ak shell` or the
+admin UI), not in this repo's git-tracked source — so the domain-generic policy for the repo itself
+still holds; only the live deployment's rendered login page carries the mark. Known limitation:
+authentik's `footer_links` schema has no `aria-hidden` equivalent, so a screen reader still
+announces the entry's `name` text even though it's visually minimized to a single character — full
+accessibility-tree invisibility isn't achievable through this integration point.
+
+---
+
+## ADR-014: Login-page-only theme toggle via a scoped template override, not authentik's native theme mechanism
+
+**Context:** The operator wants a single light→dark→system cycling theme button on the login page
+(matching the convention used in the `zqx` project), plus removal of the "Powered by authentik"
+footer text and a corrected footer/veloso.dev-signature CSS selector (the previously-documented
+`ak-flow-executor::part(footer) li:...` rules turned out to be spec-invalid — `::part()` can't take
+a descendant combinator per the CSS Shadow Parts spec, so those rules were likely inert; see
+`docs/authentik-manual.md` for the corrected selectors). The operator was explicit and emphatic that
+this toggle must affect **only** the login/flow-executor pages — not authentik's own post-login
+interface (User/Admin), which already has its own native light/dark/auto picker exposed via Brand
+defaults and per-user account settings. authentik's native mechanism reads/writes a single
+site-wide `localStorage["theme"]` key and `data-theme`/`data-theme-choice` attributes on `<html>`
+(`authentik/core/templates/base/theme.html`, `web/src/common/theme.ts`), so naively hooking a login
+button into that same mechanism would leak the login-page preference into the authenticated
+interface after signing in — explicitly not wanted.
+
+**Decision:** Implement the toggle with its own, independent storage key
+(`localStorage["sns-login-theme"]`) and DOM attribute (`data-sns-login-theme`), never touching
+authentik's own `theme`/`data-theme`/`data-theme-choice`. Because `branding_custom_css` is CSS-only
+and can't carry the required `<script>`/`<button>` markup, the toggle is delivered via a Django
+template override of `if/flow.html` (the flow-executor page template only — not
+`base/skeleton.html`, which is shared with the post-login interfaces and must not be touched),
+mounted through the `/templates` volume already wired in `docker-compose.yml`. The override,
+version-controlled at [`authentik-custom-templates/if/flow.html`](../authentik-custom-templates/if/flow.html),
+is a strict superset of authentik's own `if/flow.html` at the pinned `2026.5.4` tag — confirmed via
+a line-level diff showing only additive lines, no changes or deletions to any of authentik's
+original template content. The footer fix (`ak-brand-links li:last-child` to hide "Powered by
+authentik", `ak-brand-links li:first-child` for the veloso.dev signature) is a `branding_custom_css`
+correction only, requiring no template change.
+
+**Consequences:** The login page gets independent theming without risk of altering the
+authenticated interface's appearance, and without patching authentik's own compiled JS/CSS. Trade-off:
+a full-file template override means authentik's own future changes to `if/flow.html` won't
+propagate automatically — each `AUTHENTIK_TAG` bump needs a manual re-diff (documented in
+`docs/security-hardening.md`, "Image Upgrade Procedure") to catch upstream changes this override
+would otherwise silently miss. Not yet deployed or visually verified against the live instance as
+of this decision — no Docker access from the sandbox this was written in.

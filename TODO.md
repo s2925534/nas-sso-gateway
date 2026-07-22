@@ -3,6 +3,30 @@
 Status legend: `[ ]` not done, `[x]` done. See [`docs/phase-plan.md`](docs/phase-plan.md) for the
 full description of each phase.
 
+## Current Priorities (updated 2026-07-22)
+
+Top of the queue right now, ahead of the older unconfirmed Phase 3/6 items below — this is
+branding/customization work written and committed this session but **not yet applied to the live
+instance** (no Docker/live access from the sandbox this was authored in):
+
+1. **Deploy the corrected footer CSS** (`docs/authentik-manual.md`, "Footer Links") — the
+   previously-live `::part(footer) li:...` rules are spec-invalid (confirmed via the CSS Shadow
+   Parts spec) and were likely doing nothing; paste the corrected `ak-brand-links li:...` block
+   into **System → Brands → edit the active brand → Custom CSS**, then confirm live that "Powered
+   by authentik" is actually hidden and the veloso.dev dot signature actually renders.
+2. **Deploy the login-page-only theme toggle** (ADR-014 in `docs/decision-log.md`) — copy
+   [`authentik-custom-templates/if/flow.html`](authentik-custom-templates/if/flow.html) to
+   `${SSO_BASE_PATH}/authentik/custom-templates/if/flow.html`, paste the toggle's CSS into the same
+   Custom CSS field, restart `authentik-server`/`authentik-worker`, then click through all three
+   states (system/light/dark) **and separately confirm the post-login interface's own theme is
+   unaffected** — that isolation is the whole point of this design, verify it actually holds.
+3. **Re-check the "title only visible on hover" report** — live, with devtools closed. Source
+   review found no CSS/native mechanism that would cause it (see `docs/authentik-manual.md`, "Flow
+   Title, Logo Position..."); don't ship a speculative CSS fix for this without seeing it reproduce.
+4. Everything in Phase 3/6 below that was already queued before this session remains queued —
+   this branding work doesn't supersede it, just sits ahead of it since it's freshly written and
+   unverified.
+
 ## Phase 0: Planning and Documentation Foundation
 
 - [x] Create README
@@ -72,6 +96,9 @@ bottom.
 - [ ] App portal example (guide ready: §7) — unconfirmed
 - [ ] Group and role examples (guide ready: §4) — unconfirmed whether `publisher` is
       group-restricted (see Phase 4 note)
+- [ ] Favicon branded with our logo, not authentik's default (guide ready: §9 "Branding" — Logo/Favicon
+      currently left unset per ADR-013 until a real asset is supplied; see `docs/authentik-manual.md`
+      "Branding (Login Page / 'Systems Not Silos')")
 
 MFA scope decision (2026-07-14): only passkey (WebAuthn) and username/password are in scope for
 login. TOTP-authenticator-app and SMS-based MFA are explicitly deferred until asked for again or
