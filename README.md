@@ -16,6 +16,9 @@ Self-hosted Single Sign-On (SSO) gateway for NAS-hosted web apps, built on
   Cloudflare automation baked in, and no dependency on any specific external tool.
 - Keeps the database and cache private, and documents a security-first rollout (local-only /
   LAN-only first, MFA before any public exposure).
+- Includes one small bespoke service, `contact-relay/` (see ADR-017 in
+  [`docs/decision-log.md`](docs/decision-log.md)), that relays the login page's "Contact Support"
+  form to an admin inbox over SMTP — everything else in this repo wraps third-party images.
 
 ## What This Project Does Not Do
 

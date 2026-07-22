@@ -402,9 +402,60 @@ CSS above:
 
 Cycle order matches the convention used elsewhere (e.g. `zqx`): `system → light → dark → system`,
 persisted in `localStorage["sns-login-theme"]` (absent = system), sun/moon/monitor SVG icons,
-`aria-label`/`title` announcing current and next state. **Not yet deployed or verified live** — no
-Docker access from this sandbox; copy the template file, paste the CSS, restart the containers, and
-click through all three states next time you're at the NAS.
+`aria-label`/`title` announcing current and next state. **Deployed and live** as of 2026-07-22 —
+confirmed via browser screenshot that the button renders; the actual three-state click-through
+still hasn't been exercised (see TODO.md).
+
+## Contact Support Form
+
+The login page's "Contact Support" footer link opens a small form (email + message), which POSTs
+to a dedicated backend service — `contact-relay/` — rather than authentik itself. This is the
+**first bespoke code in this repo**; everything else wraps third-party images. See ADR-017 in
+[`docs/decision-log.md`](decision-log.md) for why a new service was the right call (authentik has
+no generic "send arbitrary email" endpoint it's safe to expose to unauthenticated visitors).
+
+**Pieces, and where they live:**
+
+1. **Backend** — `contact-relay/app.py`, a small Flask app with one `POST /send` endpoint.
+   Validates the sender email and message body, strips CR/LF from user input (prevents SMTP header
+   injection), sends via its own SMTP config (`CONTACT_EMAIL__*` in `.env` — deliberately separate
+   from `AUTHENTIK_EMAIL__*`, see the comment on the `contact-relay` service in
+   `docker-compose.yml`), sets `Reply-To` to the visitor's address rather than spoofing `From`
+   (avoids the receiving mail server rejecting/spam-filtering it), and applies a simple in-memory
+   per-IP rate limit (`CONTACT_RATE_LIMIT_MAX`/`CONTACT_RATE_LIMIT_WINDOW_SECONDS`, resets on
+   restart — casual anti-spam only, not a hard control).
+2. **Frontend** — the form markup/JS lives in `authentik-custom-templates/if/flow.html` (a `hidden`
+   `<div>` toggled by clicking the "Contact Support" footer link), styling in the Brand's Custom
+   CSS field, same convention as the theme toggle above.
+3. **Footer link** — the live Tenant's `footer_links` entry (see "Footer Links" above) needs
+   updating: `{"name": "Contact Support (coming soon)", "href": None}` →
+   `{"name": "Contact Support", "href": "#contact-form"}`. The template's JS finds this link by its
+   exact text content and attaches a click handler that toggles the form instead of navigating (a
+   real `href` is still needed so it renders as a clickable `<a>` at all — see "Footer Links"
+   above: an entry with `href: None` renders as plain, non-interactive text).
+
+**Deployment sequence — none of this is live yet, deliberately, in this order:**
+
+1. Push to `main` (already done) — this repo's new CI workflow
+   (`.github/workflows/contact-relay-publish.yml`) builds and pushes
+   `ghcr.io/<owner>/nas-sso-gateway-contact-relay:latest` automatically on any push touching
+   `contact-relay/`.
+2. Set the real values for `CONTACT_ADMIN_EMAIL`, `CONTACT_ALLOWED_ORIGIN`, and `CONTACT_EMAIL__*`
+   in `.env` on the NAS (see `.env.example`).
+3. `docker compose up -d contact-relay` — starts the new service, bound to
+   `${SSO_BIND_HOST}:${CONTACT_RELAY_PORT}` (default `9001`), same pattern as
+   `SSO_HTTP_PORT` for authentik itself.
+4. Route your reverse-proxy/tunnel at that port — same as every other app in this ecosystem, this
+   is outside this repo's scope (ADR-003). The template's `RELAY_ENDPOINT` constant
+   (`authentik-custom-templates/if/flow.html`, clearly marked `EDIT ME`) needs to match wherever you
+   actually expose it — it defaults to a same-origin path (`/contact-api/send`), which only works
+   if your routing maps that path to the `contact-relay` container.
+5. **Only then** update the live Tenant's `footer_links` (step 3 above) and push the contact-form
+   CSS into the Brand's Custom CSS field — doing this before the backend is reachable would put a
+   "Send" button on the real login page that fails every time it's clicked.
+6. Test end-to-end: submit the form, confirm the email arrives at `CONTACT_ADMIN_EMAIL`, confirm
+   replying goes to the visitor's address (via `Reply-To`), confirm a 6th rapid submission gets
+   rate-limited.
 
 ## Creating an API Token for Automation
 

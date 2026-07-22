@@ -348,3 +348,43 @@ zoomed-in-on) rather than the full marketing-quality source asset. Neither the s
 generated favicon are committed to this repo (consistent with the existing "don't commit brand
 image assets" policy — see the Branding section of `docs/authentik-manual.md`) — both live only in
 the NAS's own media storage, per-deployment.
+
+---
+
+## ADR-017: Add `contact-relay`, this repo's first bespoke backend service
+
+**Context:** The operator asked for a "Contact Support" link on the login page that opens a form
+(sender email + message) and emails it to an admin inbox. Sending email requires server-side logic
+— something has to receive the submission and talk to an SMTP relay. This repo has had zero
+bespoke code until now: every service in `docker-compose.yml` wraps a third-party image
+(authentik, PostgreSQL, Redis), and every prior customization (theme toggle, footer/branding CSS)
+was achievable through authentik's own template-override/custom-CSS mechanisms, requiring no new
+server-side component. A contact form's email-sending step has no equivalent hook — authentik has
+no generic, safe-to-expose-unauthenticated "send arbitrary email" endpoint, and building one by
+patching authentik itself would be a far more invasive, upgrade-fragile change than adding one
+small, independent service.
+
+**Decision:** Add `contact-relay/`, a minimal Flask service with a single `POST /send` endpoint,
+built and published by this repo's own CI (`.github/workflows/contact-relay-publish.yml`) to GHCR,
+and run as a new `contact-relay` service in `docker-compose.yml`. Deliberately *not* pinned to an
+exact version like authentik (ADR-010) — since this is code this repo owns and controls, it tracks
+`:latest` with a Watchtower label, matching the convention used for this project's own code
+elsewhere in the operator's ecosystem (e.g. `wordpress-ai-publisher`), rather than the
+pin-third-party-images posture used for authentik/PostgreSQL/Redis. Security posture, given this is
+a new **unauthenticated, public-facing** endpoint: strips CR/LF from user input (prevents SMTP
+header injection), never uses visitor-supplied input as the SMTP `From` (uses a fixed configured
+address, with the visitor's address only in `Reply-To` — avoids the receiving mail server rejecting
+or spam-filtering a spoofed `From`), fixed non-user-controllable subject and destination
+(`CONTACT_ADMIN_EMAIL`, an operator-set env var — never taken from the request), and a simple
+in-memory per-IP rate limit as a casual anti-spam measure (explicitly not a hard security control —
+documented as such, resets on container restart).
+
+**Consequences:** This is a real, if small, expansion of what this repo is — it now has application
+code to review, patch, and maintain, not just configuration and docs. It also introduces a new
+public attack surface (an unauthenticated form endpoint) that didn't exist before, which is why the
+input-sanitization and rate-limiting above aren't optional extras. Deliberately staged so the live
+login page never shows a non-functional "Send" button: the footer link's text/href and the
+contact-form CSS are pushed live only *after* the service is actually deployed and reachable — see
+"Deployment sequence" in `docs/authentik-manual.md`, "Contact Support Form". As with `contact-relay`
+itself, its own SMTP credentials (`CONTACT_EMAIL__*`) are kept separate from authentik's
+(`AUTHENTIK_EMAIL__*`) so rotating one relay's credentials can never silently break the other.

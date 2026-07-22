@@ -1,12 +1,18 @@
-# NAS SSO Gateway — authentik + PostgreSQL + Redis
+# NAS SSO Gateway — authentik + PostgreSQL + Redis + contact-relay
 #
 # Security rules enforced by this file (see docs/security.md):
 #   - PostgreSQL and Redis publish no host ports — reachable only on the
 #     internal Docker network.
-#   - Only the authentik web server is bound to a host port, and only to
-#     ${SSO_BIND_HOST}:${SSO_HTTP_PORT}.
+#   - The authentik web server and the contact-relay service are the only
+#     containers bound to a host port, each to its own
+#     ${SSO_BIND_HOST}:port.
 #   - All persistent data lives under ${SSO_BASE_PATH}, never a hardcoded
 #     Synology volume path.
+#
+# contact-relay is this repo's own bespoke service (see contact-relay/ and
+# ADR-017 in docs/decision-log.md) — everything else here is a third-party
+# image. It exists solely to relay the login page's "Contact Support" form
+# to an admin inbox over SMTP; it holds no user data of its own.
 #
 # Public exposure (Cloudflare/DNS/tunnel/certs) is NOT handled here — bring
 # whatever reverse-proxy/tunnel/deployer tooling you use, or none at all for
@@ -134,6 +140,42 @@ services:
     networks:
       - sso-internal
     # No `ports:` — the worker has no web UI of its own.
+
+  contact-relay:
+    # Bespoke code (contact-relay/), built and published by this repo's own
+    # CI to GHCR -- see docs/deployer-integration.md. Unlike authentik above
+    # (a pinned third-party image, see ADR-010), this one tracks `latest` and
+    # is Watchtower-managed, matching the convention used for this project's
+    # own code elsewhere in this ecosystem.
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-s2925534}/nas-sso-gateway-contact-relay:${CONTACT_RELAY_TAG:-latest}
+    container_name: sso-contact-relay
+    restart: unless-stopped
+    environment:
+      CONTACT_ADMIN_EMAIL: ${CONTACT_ADMIN_EMAIL:?CONTACT_ADMIN_EMAIL must be set in .env}
+      CONTACT_ALLOWED_ORIGIN: ${CONTACT_ALLOWED_ORIGIN:?CONTACT_ALLOWED_ORIGIN must be set in .env (the login page's real origin, for CORS)}
+      # Separate SMTP config from AUTHENTIK_EMAIL__* on purpose -- this is a
+      # different sender identity, and keeping them independent means
+      # rotating one relay's credentials never silently breaks the other.
+      CONTACT_EMAIL__HOST: ${CONTACT_EMAIL__HOST:-}
+      CONTACT_EMAIL__PORT: ${CONTACT_EMAIL__PORT:-587}
+      CONTACT_EMAIL__USERNAME: ${CONTACT_EMAIL__USERNAME:-}
+      CONTACT_EMAIL__PASSWORD: ${CONTACT_EMAIL__PASSWORD:-}
+      CONTACT_EMAIL__USE_TLS: ${CONTACT_EMAIL__USE_TLS:-true}
+      CONTACT_EMAIL__USE_SSL: ${CONTACT_EMAIL__USE_SSL:-false}
+      CONTACT_EMAIL__FROM: ${CONTACT_EMAIL__FROM:-contact@example.com}
+      CONTACT_RATE_LIMIT_MAX: ${CONTACT_RATE_LIMIT_MAX:-5}
+      CONTACT_RATE_LIMIT_WINDOW_SECONDS: ${CONTACT_RATE_LIMIT_WINDOW_SECONDS:-3600}
+    ports:
+      - "${SSO_BIND_HOST:-0.0.0.0}:${CONTACT_RELAY_PORT:-9001}:8080"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sso-internal
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
 networks:
   sso-internal:

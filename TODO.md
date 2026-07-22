@@ -45,6 +45,24 @@ branding/customization work is merged into `main` (PR #2).
       HTML, but nobody has actually clicked it yet to confirm all three states (system/light/dark)
       render correctly and that the post-login interface's own theme is unaffected — that isolation
       is the whole point of this design and still hasn't been exercised, only inspected.
+- [x] **Contact Support form — code written, committed, NOT deployed** (ADR-017) — `contact-relay/`
+      (Flask, this repo's first bespoke service), `docker-compose.yml` service definition,
+      `.github/workflows/contact-relay-publish.yml` (GHCR CI), `.env.example` vars, and the
+      form/JS in `authentik-custom-templates/if/flow.html` are all written and pushed to `main`.
+      Deliberately **not yet live** — see "Deployment sequence" in `docs/authentik-manual.md`,
+      "Contact Support Form". Remaining steps, in order:
+  - [ ] Set real `CONTACT_ADMIN_EMAIL`, `CONTACT_ALLOWED_ORIGIN`, `CONTACT_EMAIL__*` in `.env` on
+        the NAS
+  - [ ] `docker compose up -d contact-relay` (needs the CI-built GHCR image to exist first — should
+        be automatic after the push to `main`, but not confirmed)
+  - [ ] Route a reverse-proxy/tunnel path at `CONTACT_RELAY_PORT` (default `9001`) — outside this
+        repo's scope, same as every other app in this ecosystem (ADR-003)
+  - [ ] Update `authentik-custom-templates/if/flow.html`'s `RELAY_ENDPOINT` constant to match
+        whatever path/host you actually routed
+  - [ ] Only then: update the live Tenant's `footer_links` ("Contact Support (coming soon)" →
+        "Contact Support", add `href`) and push the contact-form CSS to the Brand's Custom CSS field
+  - [ ] Test end-to-end: submit the form, confirm the email arrives, confirm reply-to works,
+        confirm rate-limiting kicks in on rapid resubmission
 - Everything in Phase 3/6 below that was already queued before this session remains queued — this
   branding work doesn't supersede it, just sits ahead of it.
 

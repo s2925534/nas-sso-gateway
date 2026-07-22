@@ -143,4 +143,109 @@
   });
 })();
 </script>
+
+{% comment %}
+    Contact Support form, toggled by the "Contact Support" footer link (set via
+    Tenant.footer_links -- see docs/authentik-manual.md, "Contact Support Form"). Styling
+    lives in the Brand's Custom CSS field, same convention as the theme toggle above.
+{% endcomment %}
+<div id="sns-contact-form" class="sns-contact-form" hidden>
+  <form id="sns-contact-form-inner">
+    <label for="sns-contact-email">Your email</label>
+    <input type="email" id="sns-contact-email" name="email" required autocomplete="email" />
+
+    <label for="sns-contact-body">Message</label>
+    <textarea id="sns-contact-body" name="body" rows="4" required></textarea>
+
+    <div class="sns-contact-form-actions">
+      <button type="submit" id="sns-contact-submit">Send</button>
+      <button type="button" id="sns-contact-cancel">Cancel</button>
+    </div>
+    <p id="sns-contact-status" role="status" aria-live="polite"></p>
+  </form>
+</div>
+<script data-id="sns-contact-form">
+(function () {
+  // EDIT ME per deployment: the contact-relay service's public endpoint. Not
+  // derivable from this template (routing is external, see ADR-003) -- point
+  // this at wherever your reverse proxy/tunnel exposes the contact-relay
+  // service (see CONTACT_RELAY_PORT in .env.example).
+  var RELAY_ENDPOINT = "/contact-api/send";
+
+  var formWrap = document.getElementById("sns-contact-form");
+  var form = document.getElementById("sns-contact-form-inner");
+  var cancelBtn = document.getElementById("sns-contact-cancel");
+  var submitBtn = document.getElementById("sns-contact-submit");
+  var status = document.getElementById("sns-contact-status");
+  if (!formWrap || !form) return;
+
+  function findContactLink() {
+    var links = document.querySelectorAll('ak-brand-links a, ak-brand-links li');
+    for (var i = 0; i < links.length; i++) {
+      if (links[i].textContent && links[i].textContent.trim() === "Contact Support") {
+        return links[i];
+      }
+    }
+    return null;
+  }
+
+  function toggleForm(show) {
+    formWrap.hidden = !show;
+    if (show) {
+      document.getElementById("sns-contact-email").focus();
+    }
+  }
+
+  var contactLink = findContactLink();
+  if (contactLink) {
+    contactLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      toggleForm(formWrap.hidden);
+    });
+  }
+
+  cancelBtn.addEventListener("click", function () {
+    toggleForm(false);
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    status.textContent = "";
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending…";
+
+    var payload = {
+      email: document.getElementById("sns-contact-email").value,
+      body: document.getElementById("sns-contact-body").value,
+    };
+
+    fetch(RELAY_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (result.ok) {
+          status.textContent = "Message sent — thanks, we'll get back to you.";
+          form.reset();
+          setTimeout(function () { toggleForm(false); }, 2000);
+        } else {
+          status.textContent = (result.data && result.data.error) || "Failed to send message.";
+        }
+      })
+      .catch(function () {
+        status.textContent = "Failed to send message — check your connection and try again.";
+      })
+      .finally(function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Send";
+      });
+  });
+})();
+</script>
 {% endblock %}
