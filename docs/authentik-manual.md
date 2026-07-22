@@ -111,10 +111,17 @@ writing (`<title>Systems Not Silos</title>`, logo serving `200 image/jpeg`):
 2. **Default flow background** — cleared, removing authentik's stock background image.
 3. **Logo** — uploaded (the real "Systems Not Silos" circular badge asset). See "Media Storage
    Prerequisite" below — this silently fails without it.
-4. **Custom CSS** — brand color palette (navy `#0B1C33` / blue `#5B84B4`), plus the shadow-DOM
+4. **Favicon** — a dedicated lightweight asset (`systemsnotsilos-favicon.ico`, a multi-resolution
+   16/32/48px `.ico`, ~7.9KB), generated from the same source logo rather than reusing the full
+   1254×1254 ~89KB logo file directly — see ADR-016 in
+   [`docs/decision-log.md`](decision-log.md). Same "Media Storage Prerequisite" applies, and the
+   `media/public/` directory is owned by the container's runtime user (`1000:1000`), not the login
+   SSH user — writing to it needs `sudo`, not a plain SFTP session (unlike `custom-templates/`,
+   which the login user does own).
+5. **Custom CSS** — brand color palette (navy `#0B1C33` / blue `#5B84B4`), plus the shadow-DOM
    fixes below. See ADR-013 in [`docs/decision-log.md`](decision-log.md) for the veloso.dev
    binary-dot signature decision (added, not skipped — the domain-generic policy was explicitly
-   overridden by the operator for this specific element).
+   overridden by the operator for this specific element), and ADR-015 for the logo-sizing fix.
 
 ### Media Storage Prerequisite (Logo/Favicon/Background Uploads)
 
@@ -147,9 +154,26 @@ worked but doesn't (see the footer correction below):
   language switcher), `part="content"`, `part="content-iframe"`, `part="loading-overlay"`,
   `part="challenge-additional-actions"`, `part="challenge-footer-band"`. (An earlier version of
   this doc also listed `part="login"` — not present in `2026.5.4`'s source; likely stale from an
-  older authentik version, corrected here.) Example, used live here:
-  `ak-flow-executor::part(branding) { max-height: 64px; max-width: 200px; object-fit: contain; }`
-  — fixes an oversized logo hiding form fields, which a `.pf-c-brand` rule could not.
+  older authentik version, corrected here.) **`::part()` only styles the part element's own box —
+  it does NOT shrink a differently-sized child inside it.** `part="branding"` is a `<div>` wrapping
+  the logo `<img>`; setting `max-height`/`height` on the div does not constrain the `<img>`'s own
+  rendered size (confirmed live 2026-07-22: the div's box respected a 56px cap, but its child image
+  kept rendering at its full ~122px, overflowing the div and overlapping the flow title below it —
+  a real, browser-screenshot-confirmed bug, not the hover artifact once suspected). Since a
+  descendant selector after `::part()` is invalid (see below), the only way to actually shrink
+  content that isn't itself an exposed part is `transform: scale()` on the part element — a
+  transform repaints the element's entire subtree, shadow boundary or not, unlike layout properties
+  such as `height`/`max-height` which only affect the target element's own box. First attempt used
+  `overflow: hidden` plus a fixed `height` to crop the oversized image to size — this visually
+  worked but cropped off part of the logo (confirmed by a follow-up operator screenshot report) and
+  looked too small. Corrected, current live rule: `ak-flow-executor::part(branding) { max-width:
+  160px !important; width: auto !important; margin: 0 auto -30px auto !important; transform:
+  scale(0.68) !important; transform-origin: top center !important; }` — no `overflow`/fixed
+  `height` at all, since transform alone shrinks the whole logo without needing to crop anything;
+  the negative bottom margin closes the layout gap the transform leaves behind (transforms don't
+  shrink the element's reserved layout space, only its paint). Verified live via browser screenshot:
+  full logo visible (including its "SYSTEMS NOT SILOS" text), no overlap with the title, no
+  cropping. See ADR-015 in [`docs/decision-log.md`](decision-log.md).
 - **CSS custom properties** (`--ak-*`/`--pf-*`) inherit through shadow boundaries normally, so
   `:root { --something: ...; }` works if the component reads that variable internally — but there's
   no comprehensive documented list of which properties exist; `::part()` is the more reliable path.
@@ -256,27 +280,21 @@ authentik" was likely still visible and the dot signature likely wasn't renderin
 corrected block above via **System → Brands → edit the active brand → Custom CSS** next time you're
 in the admin UI, then reload the login page to confirm both fixes visually.
 
-### Flow Title, Logo Position, and the "Hover to Reveal" Report
+### Flow Title, Logo Position — Resolved 2026-07-22
 
 The "Welcome to authentik!" (here: "Welcome to Systems, Not Silos!") heading is not Brand-level —
 it's the `title` field on the Flow object itself (`Flow.objects.get(slug="default-authentication-flow")`),
 set independently per flow, and rendered by a completely different component
 (`web/src/flow/components/ak-flow-card.ts`) than the logo. Structurally, per `FlowExecutor.ts`'s
 `render()`, the logo (`part="branding"` div) and the challenge content (which starts with the title
-`<h1>`, inside `ak-flow-card`) are **siblings inside `<main part="main">`, in that order** — meaning
-the title already renders *after* (visually: below) the logo by default DOM order, with no
-overlap in the source.
-
-An operator report during this session described the title only becoming visible when hovering
-over the logo. Source review (both authentik's bundled `flow-*.css` and this deployment's live
-`branding_custom_css`) found **no `opacity`, `position: absolute`/`z-index`, `:hover`, or native
-`title`-attribute tooltip rule anywhere** that would explain that behavior — the logo `<img>` (via
-`ThemedImage()`) doesn't even set an HTML `title` attribute. This doesn't rule out the report (a
-live visual bug can exist without a static source/CSS explanation — e.g. a transient rendering
-glitch, a devtools artifact, or something version/browser-specific), but there's no fix to make
-here without seeing it happen live. **Needs a live re-check** (hard refresh, devtools closed) before
-writing any CSS for it — the two changes above (footer correction, theme toggle below) are safe to
-ship regardless of this open item, since neither touches the branding/title layout.
+`<h1>`, inside `ak-flow-card`) are **siblings inside `<main part="main">`, in that order** — so the
+title always rendered *after* the logo in the DOM. The earlier "only visible on hover" report
+turned out to be a real overlap bug, just not one visible from static source review: confirmed via
+an actual browser screenshot 2026-07-22, the logo `<img>` was rendering at its full ~122px height
+(the `max-height: 56px` set on its wrapper div never constrained the image itself — see "Custom CSS
+and Shadow DOM" above), tall enough to visually overlap the title text below it. Fixed the same day
+with a `transform: scale()` rule on the wrapper div — see ADR-015 in
+[`docs/decision-log.md`](decision-log.md). Verified live: logo and title no longer overlap.
 
 ### Login-Page-Only Theme Toggle (Light / Dark / System)
 

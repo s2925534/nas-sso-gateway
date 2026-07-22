@@ -286,3 +286,65 @@ propagate automatically — each `AUTHENTIK_TAG` bump needs a manual re-diff (do
 `docs/security-hardening.md`, "Image Upgrade Procedure") to catch upstream changes this override
 would otherwise silently miss. Not yet deployed or visually verified against the live instance as
 of this decision — no Docker access from the sandbox this was written in.
+
+---
+
+## ADR-015: Fix logo/title overlap via `transform: scale()`, not `max-height`, on the branding part
+
+**Context:** A browser screenshot taken 2026-07-22 (this repo's first actual visual check of the
+live login page, as opposed to `curl`/source review) confirmed a real bug: the flow title ("Welcome
+to Systems, Not Silos!") overlapped the logo. The existing custom CSS set
+`max-height: 56px !important` on `ak-flow-executor::part(branding)` — the logo's wrapper `<div>` —
+believing this would shrink the logo. It didn't: the wrapper div's own box respected the cap
+reasonably well, but the `<img>` inside it kept rendering at its full intrinsic size (~122px),
+overflowing the div and overlapping the title below. This is a general CSS fact, not an
+authentik-specific bug: a parent's `max-height`/`height` does not constrain a child's own rendered
+size unless the child is explicitly sized relative to the parent (e.g. `height: 100%`) — and here,
+the child (`<img>`) cannot be targeted directly, since `::part(branding)` is the div, and a
+descendant combinator after `::part()` is invalid per the CSS Shadow Parts spec (same limitation
+already documented for the footer in ADR-013-era work).
+
+**Decision:** Use `transform: scale()` on `ak-flow-executor::part(branding)` instead of
+`max-height`/`overflow: hidden`. A CSS transform repaints the *entire* subtree of the transformed
+element, regardless of shadow-DOM boundaries or descendant-selector restrictions — so it can
+visually shrink the logo without needing to reach the `<img>` itself, and without cropping any of
+the image's content. First attempt used `scale(0.46)` with `overflow: hidden` and a fixed
+`height: 56px`, sized to match the original (wrong) 56px target; the operator reported it visually
+too small and appearing "cut" at the bottom. Corrected to `scale(0.68)` with `transform-origin: top
+center` and no `overflow`/fixed `height` (transform alone is sufcient; clipping isn't needed since
+nothing needs to be cropped), plus a negative `margin-bottom` to close the layout gap left by the
+wrapper div's own box not shrinking (transforms don't affect layout size, only paint). Verified live
+via browser screenshot after each iteration.
+
+**Consequences:** Logo renders at a reasonable size, fully visible (including its "SYSTEMS NOT
+SILOS" text), with no overlap with the title. Trade-off: the exact scale/margin values (`0.68`,
+`-30px`) are tuned to this specific logo asset's aspect ratio and the current flow-card layout —
+they are not a generic formula, and would need re-tuning if the logo asset or authentik's own flow
+layout changes materially (e.g. a future `AUTHENTIK_TAG` bump). This is the same
+full-file/full-value re-tuning risk already noted for the template override in ADR-014, extended to
+this CSS value pair.
+
+## ADR-016: Favicon reuses the existing logo asset, downscaled for lightweight delivery
+
+**Context:** The Brand's `branding_favicon` field was still pointing at authentik's own stock icon
+(`/static/dist/assets/icons/icon.png`) — no "Systems Not Silos" favicon had been set. The operator
+asked for one sourced from the existing logo, explicitly downscaled rather than reusing the
+full-size asset directly (the source logo is a 1254×1254 JPEG, ~89KB — too heavy for a favicon,
+which browsers fetch on every page load and often cache poorly).
+
+**Decision:** Generate a dedicated favicon asset from the existing logo rather than pointing
+`branding_favicon` at the same file used for `branding_logo`: downscaled to a multi-resolution
+`.ico` (16×16, 32×32, 48×48) for broad browser/OS compatibility, ~7.9KB. Uploaded to the same
+`media/public/` storage location as the logo (`systemsnotsilos-favicon.ico`), matching the existing
+asset-naming convention, and set via the same `ak shell`/Django-ORM path used for the other live
+Brand/CSS changes this session (no admin-UI session available). Ownership set to match the
+container's runtime user (`1000:1000`), same as the existing media directory — the login user's own
+SFTP session doesn't have write access there, unlike `custom-templates`, so this went through a
+root-privileged (`sudo`) write instead.
+
+**Consequences:** Favicon now shows the actual brand mark instead of authentik's stock icon, at a
+size appropriate for how favicons are actually used (small, frequently-fetched, rarely
+zoomed-in-on) rather than the full marketing-quality source asset. Neither the source logo nor the
+generated favicon are committed to this repo (consistent with the existing "don't commit brand
+image assets" policy — see the Branding section of `docs/authentik-manual.md`) — both live only in
+the NAS's own media storage, per-deployment.

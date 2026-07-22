@@ -26,14 +26,25 @@ branding/customization work is merged into `main` (PR #2).
       screenshot). "Powered by authentik" is still in the DOM (expected — the field can't be
       removed at the data layer) but is now `display: none`, which also removes it from the
       accessibility tree, not just visually.
-- [ ] **Real browser check, both fixes** — nobody has looked at this in an actual browser yet.
-      Confirm: "Powered by authentik" is actually hidden, the veloso.dev dot signature actually
-      renders, the theme toggle button appears and cycles through all three states, and the
-      post-login interface's own theme is unaffected by the login-page toggle.
-- [ ] **Re-check the "title only visible on hover" report** — live, with devtools closed. Source
-      review found no CSS/native mechanism that would cause it (see `docs/authentik-manual.md`,
-      "Flow Title, Logo Position..."); don't ship a speculative CSS fix for this without seeing it
-      reproduce.
+- [x] **Real browser check, footer + logo** — done 2026-07-22 via a real Chrome browser
+      (Playwright, screenshots taken). Confirmed live: "Powered by authentik" is visually hidden,
+      the veloso.dev dot signature renders as a row of dots in the footer, and — this is how the
+      logo/title overlap bug was actually found and confirmed (see below) — a real screenshot
+      caught a bug that `curl`/source review had missed entirely.
+- [x] **Logo/title overlap — was real, not a hover artifact** — fixed and verified live, see
+      ADR-015 in `docs/decision-log.md`. Root cause: `max-height` on the logo's wrapper div doesn't
+      constrain the `<img>` inside it; fixed with `transform: scale(0.68)` on the wrapper instead
+      (shrinks the whole rendered subtree, not croppable-selector-dependent). Two live iterations
+      were needed — the first (`scale(0.46)` + `overflow: hidden`) visually cropped the logo per
+      operator feedback; the corrected version shows the full logo, no overlap, no cropping.
+- [x] **Favicon** — done 2026-07-22, see ADR-016. A dedicated lightweight `.ico` (7.9KB,
+      16/32/48px) generated from the existing logo, not the full-size asset reused directly.
+      Verified live: `<link rel="icon">` points at it, serves `200` with the correct
+      `image/vnd.microsoft.icon` content-type.
+- [ ] **Theme toggle click-through** — the template is deployed and confirmed present in the served
+      HTML, but nobody has actually clicked it yet to confirm all three states (system/light/dark)
+      render correctly and that the post-login interface's own theme is unaffected — that isolation
+      is the whole point of this design and still hasn't been exercised, only inspected.
 - Everything in Phase 3/6 below that was already queued before this session remains queued — this
   branding work doesn't supersede it, just sits ahead of it.
 
