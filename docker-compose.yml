@@ -73,6 +73,12 @@ services:
       AUTHENTIK_EMAIL__USE_TLS: ${AUTHENTIK_EMAIL__USE_TLS:-true}
       AUTHENTIK_EMAIL__USE_SSL: ${AUTHENTIK_EMAIL__USE_SSL:-false}
       AUTHENTIK_EMAIL__FROM: ${AUTHENTIK_EMAIL__FROM:-authentik@example.com}
+      # Without this, authentik's file-management backend (brand logo/favicon/
+      # background uploads) treats /media as unmanageable -- it only trusts a
+      # path it can confirm is an actual mount point, and its default
+      # (./data) isn't one. Points it at the /media volume already mounted
+      # below instead of leaving it default to a non-persistent path.
+      AUTHENTIK_STORAGE__MEDIA__FILE__PATH: /media
     volumes:
       - ${SSO_BASE_PATH:-./data/sso}/authentik/media:/media
       - ${SSO_BASE_PATH:-./data/sso}/authentik/custom-templates:/templates
@@ -111,6 +117,8 @@ services:
       AUTHENTIK_EMAIL__USE_TLS: ${AUTHENTIK_EMAIL__USE_TLS:-true}
       AUTHENTIK_EMAIL__USE_SSL: ${AUTHENTIK_EMAIL__USE_SSL:-false}
       AUTHENTIK_EMAIL__FROM: ${AUTHENTIK_EMAIL__FROM:-authentik@example.com}
+      # See the matching comment on authentik-server -- same reason.
+      AUTHENTIK_STORAGE__MEDIA__FILE__PATH: /media
     volumes:
       - ${SSO_BASE_PATH:-./data/sso}/authentik/media:/media
       - ${SSO_BASE_PATH:-./data/sso}/authentik/custom-templates:/templates
