@@ -438,3 +438,15 @@ one-time step in the Gmail account's own settings (add + verify `admin@systemsno
 needs the operator directly. Scope of "every service" using this pattern is not yet defined beyond
 `contact-relay` in this repo — extending it to other ecosystem projects is a decision for whenever
 that specific need comes up, not applied speculatively here.
+
+**Resolved, same day:** the operator added and verified `admin@systemsnotsilos.com` under Gmail's
+"Send mail as" settings. Re-tested at every layer, checking the actually-delivered message each
+time via IMAP (not just the SMTP response) against both Sent Mail and Inbox: a direct SMTP test
+now shows `From: admin@systemsnotsilos.com`, and a real `POST /send` against the live
+`contact-relay` endpoint on the NAS shows the same — correct `From`, correct `Reply-To` (the
+visitor's address), correct body. The feature is fully functional end-to-end at the mail-sending
+layer. Remaining gap is unchanged from ADR-017: no reverse-proxy/tunnel route exists yet, so the
+form isn't reachable from outside the NAS, and the live footer link/CSS are still intentionally not
+flipped on. This whole account-vs-alias pattern, and the "don't trust a successful SMTP transaction
+as proof `From` was honored" testing method, is now captured as a reusable skill
+(`~/.claude/skills/ecosystem-mail-relay/`) for any future domain/project needing the same setup.

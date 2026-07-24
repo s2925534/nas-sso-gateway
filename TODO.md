@@ -56,19 +56,19 @@ branding/customization work is merged into `main` (PR #2).
       `admin@systemsnotsilos.com`) and `CONTACT_ALLOWED_ORIGIN` (`https://sso.systemsnotsilos.com`),
       container started and confirmed `(healthy)`, `/health` returns `200` on `127.0.0.1:9001` on
       the NAS itself.
-- [x] **SMTP auth wired up — sends real mail, but NOT yet branded correctly** (2026-07-25,
-      ADR-018) — `CONTACT_EMAIL__*` set on the live `.env`: auth as `pedro@veloso.dev` (the real
-      Google Workspace account, aliases can't authenticate directly — this cost two failed login
-      attempts before landing on this), `CONTACT_EMAIL__FROM=admin@systemsnotsilos.com`.
-      `curl -X POST http://127.0.0.1:9001/send` returns `{"ok":true}` and a real email does arrive
-      — but the operator confirmed the delivered message shows sender `pedro@veloso.dev`, **not**
-      the intended `admin@systemsnotsilos.com` alias. A successful send is not the same as the
-      `From` being honored — Gmail silently rewrites it rather than rejecting.
-  - [ ] **Fix the sender identity** — add and verify `admin@systemsnotsilos.com` under that Gmail
-        account's own **Settings → Accounts and Import → "Send mail as"**. This is a one-time step
-        in the Google account's own web UI — not something scriptable from here. Re-test
-        `POST /send` and check the actually-delivered message afterward, not just the HTTP
-        response.
+- [x] **SMTP fully working end-to-end, correct sender identity** (2026-07-25, ADR-018) —
+      `CONTACT_EMAIL__*` set on the live `.env`: auth as `pedro@veloso.dev` (the real Google
+      Workspace account — aliases can't authenticate directly), `CONTACT_EMAIL__FROM=
+      admin@systemsnotsilos.com`. Initial test looked like it worked (`{"ok":true}`) but the
+      operator caught that the delivered message actually showed `pedro@veloso.dev` as sender —
+      Gmail silently rewrites an unregistered alias instead of rejecting it. Root cause: the alias
+      wasn't yet added under that Gmail account's **Settings → Accounts and Import → "Send mail
+      as"**. Operator added and verified it there; re-tested via IMAP (checking the real
+      delivered/sent message, not just the HTTP response) against both a direct SMTP test and the
+      actual `contact-relay` `POST /send` endpoint — both now show the correct `From:
+      admin@systemsnotsilos.com`, correct `Reply-To`, correct body. This account-vs-alias pattern
+      and its "verify via IMAP, never trust a successful SMTP transaction alone" testing method are
+      now captured as a reusable skill (`~/.claude/skills/ecosystem-mail-relay/`).
   - [ ] Route a reverse-proxy/tunnel path at `CONTACT_RELAY_PORT` (`9001`) so it's reachable from
         outside the NAS — outside this repo's scope, same as every other app in this ecosystem
         (ADR-003); right now the service only answers on `127.0.0.1` on the NAS itself
