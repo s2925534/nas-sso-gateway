@@ -55,12 +55,20 @@ branding/customization work is merged into `main` (PR #2).
       confirms nothing else had drifted), `.env` updated with `CONTACT_ADMIN_EMAIL` (
       `admin@systemsnotsilos.com`) and `CONTACT_ALLOWED_ORIGIN` (`https://sso.systemsnotsilos.com`),
       container started and confirmed `(healthy)`, `/health` returns `200` on `127.0.0.1:9001` on
-      the NAS itself. **`CONTACT_EMAIL__*` (SMTP) were deliberately left blank** — nobody has real
-      SMTP relay credentials to put there yet (same unconfigured state as `AUTHENTIK_EMAIL__*` for
-      password reset). The container runs fine, but every actual send attempt will fail with a
-      `502` until real SMTP values are set.
-  - [ ] Set real `CONTACT_EMAIL__HOST`/`PORT`/`USERNAME`/`PASSWORD`/`FROM` in `.env` on the NAS —
-        the whole feature is a no-op without this
+      the NAS itself.
+- [x] **SMTP auth wired up — sends real mail, but NOT yet branded correctly** (2026-07-25,
+      ADR-018) — `CONTACT_EMAIL__*` set on the live `.env`: auth as `pedro@veloso.dev` (the real
+      Google Workspace account, aliases can't authenticate directly — this cost two failed login
+      attempts before landing on this), `CONTACT_EMAIL__FROM=admin@systemsnotsilos.com`.
+      `curl -X POST http://127.0.0.1:9001/send` returns `{"ok":true}` and a real email does arrive
+      — but the operator confirmed the delivered message shows sender `pedro@veloso.dev`, **not**
+      the intended `admin@systemsnotsilos.com` alias. A successful send is not the same as the
+      `From` being honored — Gmail silently rewrites it rather than rejecting.
+  - [ ] **Fix the sender identity** — add and verify `admin@systemsnotsilos.com` under that Gmail
+        account's own **Settings → Accounts and Import → "Send mail as"**. This is a one-time step
+        in the Google account's own web UI — not something scriptable from here. Re-test
+        `POST /send` and check the actually-delivered message afterward, not just the HTTP
+        response.
   - [ ] Route a reverse-proxy/tunnel path at `CONTACT_RELAY_PORT` (`9001`) so it's reachable from
         outside the NAS — outside this repo's scope, same as every other app in this ecosystem
         (ADR-003); right now the service only answers on `127.0.0.1` on the NAS itself

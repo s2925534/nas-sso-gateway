@@ -394,3 +394,47 @@ itself, its own SMTP credentials (`CONTACT_EMAIL__*`) are kept separate from aut
 identical to `AUTHENTIK_EMAIL__*`'s current state — no real relay credentials exist yet, so
 `/send` will 502 on every call until they're added. The footer link/CSS are still deliberately not
 live. See TODO.md for the remaining steps.
+
+---
+
+## ADR-018: SMTP auth as the real Google account, `From` as the domain-matching alias
+
+**Context:** `pedro@veloso.dev`, `admin@veloso.dev`, and `admin@systemsnotsilos.com` are all one
+Google Workspace account — the latter two are aliases of `pedro@veloso.dev`, not separate
+logged-in identities. Testing this live: an app password generated on the account authenticates
+successfully as `pedro@veloso.dev` (`SMTP AUTH` succeeds), but the identical password fails with
+`535 5.7.8 Username and Password not accepted` when the *username* given is either alias — this is
+standard Gmail/Workspace behavior (an app password is scoped to the account it's generated under;
+aliases have no independent login), not a credential or formatting error (confirmed by retesting
+with the password's spaces stripped both ways — same failure either time).
+
+**Decision:** `contact-relay` (and any future ecosystem service sending mail through this same
+Workspace account) authenticates to `smtp.gmail.com` **as the real account**
+(`CONTACT_EMAIL__USERNAME=pedro@veloso.dev`), and sets `CONTACT_EMAIL__FROM` to whichever alias
+matches the **service's own domain** — `admin@systemsnotsilos.com` for this project's contact form.
+The app password itself is never committed to this repo — it lives only in the NAS's gitignored
+`.env` (`CONTACT_EMAIL__PASSWORD`).
+
+**Correction, same day:** the initial live test (`SEND_OK`, no `SMTPSenderRefused`) was read as
+confirming the alias `From` worked — it didn't. `smtp.gmail.com` accepts the SMTP transaction
+regardless, but **the operator's own inbox showed the delivered message as sent by
+`pedro@veloso.dev`, not `admin@systemsnotsilos.com`** — Gmail silently rewrote the header rather
+than rejecting it, which is why the transaction-level test missed this. A successful SMTP send is
+not proof the `From` was honored; only checking the actually-delivered message is. Root cause:
+`admin@systemsnotsilos.com` isn't (yet) registered under this Gmail account's own **Settings → See
+all settings → Accounts and Import → "Send mail as"** — `smtp.gmail.com` (the personal/per-user
+relay used with an app password) only honors a custom `From` for addresses listed and verified
+there; an alias existing at the Workspace-directory level isn't automatically enough for this
+specific relay endpoint. Until that's added (and, if it's on a separate verified Workspace domain
+rather than a same-domain alias, verified), mail sent through this path will keep showing as
+`pedro@veloso.dev` regardless of the `CONTACT_EMAIL__FROM` value.
+
+**Consequences:** The account-vs-alias authentication design still holds (one Workspace seat can
+back multiple domains' outbound mail), but the *visible sender identity* part is not yet working —
+`contact-relay` is fully functional for its actual job (relaying the message to the admin inbox),
+just not yet branded as `admin@systemsnotsilos.com` in the recipient's eyes. Fixing this needs a
+one-time step in the Gmail account's own settings (add + verify `admin@systemsnotsilos.com` under
+"Send mail as"), which isn't something to script or verify from outside that account's own web UI —
+needs the operator directly. Scope of "every service" using this pattern is not yet defined beyond
+`contact-relay` in this repo — extending it to other ecosystem projects is a decision for whenever
+that specific need comes up, not applied speculatively here.
