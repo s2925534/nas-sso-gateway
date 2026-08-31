@@ -171,6 +171,52 @@
   // this at wherever your reverse proxy/tunnel exposes the contact-relay
   // service (see CONTACT_RELAY_PORT in .env.example).
   var RELAY_ENDPOINT = "/contact-api/send";
+  // Same relay service, sibling route. Returns { recaptcha_site_key } -- the
+  // PUBLIC reCAPTCHA v3 site key, injected from the relay's server-side config
+  // so the key lives in exactly one place (the relay's env), not hardcoded
+  // here. Derived from RELAY_ENDPOINT so both track the same base path.
+  var CONFIG_ENDPOINT = RELAY_ENDPOINT.replace(/\/send$/, "/config");
+  var RECAPTCHA_ACTION = "contact";
+
+  var recaptchaSiteKey = null; // populated from CONFIG_ENDPOINT; null => skip
+
+  // Fetch the public site key and, if present, load Google's reCAPTCHA v3
+  // script. v3 is invisible/scored -- there is no widget, we just call
+  // grecaptcha.execute(...) at submit time.
+  fetch(CONFIG_ENDPOINT)
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (cfg) {
+      var key = cfg && cfg.recaptcha_site_key;
+      if (!key) return; // reCAPTCHA not configured (e.g. local dev) -> skip
+      recaptchaSiteKey = key;
+      var s = document.createElement("script");
+      s.src = "https://www.google.com/recaptcha/api.js?render=" + encodeURIComponent(key);
+      s.async = true;
+      document.head.appendChild(s);
+    })
+    .catch(function () { /* relay unreachable -> submit without a token */ });
+
+  // Resolve a v3 token for the given action. Resolves to "" when reCAPTCHA is
+  // not configured/loaded so the caller can still submit (dev / relay
+  // unconfigured). If grecaptcha.execute throws "Invalid key type", the site
+  // key was registered as reCAPTCHA v2, not v3 -- re-register it as v3.
+  function getRecaptchaToken() {
+    return new Promise(function (resolve) {
+      if (!recaptchaSiteKey || typeof grecaptcha === "undefined") {
+        resolve("");
+        return;
+      }
+      try {
+        grecaptcha.ready(function () {
+          grecaptcha.execute(recaptchaSiteKey, { action: RECAPTCHA_ACTION })
+            .then(function (token) { resolve(token || ""); })
+            .catch(function () { resolve(""); });
+        });
+      } catch (e) {
+        resolve("");
+      }
+    });
+  }
 
   var formWrap = document.getElementById("sns-contact-form");
   var form = document.getElementById("sns-contact-form-inner");
@@ -214,9 +260,13 @@
     submitBtn.disabled = true;
     submitBtn.textContent = "Sending…";
 
+    getRecaptchaToken().then(function (token) {
     var payload = {
       email: document.getElementById("sns-contact-email").value,
       body: document.getElementById("sns-contact-body").value,
+      // reCAPTCHA v3 token (empty when reCAPTCHA is not configured). The relay
+      // verifies it server-side and fails closed when it is enabled.
+      "g-recaptcha-response": token,
     };
 
     fetch(RELAY_ENDPOINT, {
@@ -245,6 +295,7 @@
         submitBtn.disabled = false;
         submitBtn.textContent = "Send";
       });
+    });
   });
 })();
 </script>

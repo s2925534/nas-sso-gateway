@@ -114,6 +114,26 @@ This stack, once exposed, becomes the single point of entry for every app behind
 commit `.env`, never expose PostgreSQL/Redis, enable MFA before going public, and have an
 emergency bypass plan for protected apps in case the SSO admin account is ever locked out.
 
+## Bot Protection (reCAPTCHA v3)
+
+Public forms are guarded by Google reCAPTCHA **v3** (invisible/scored). Two integration points:
+the Contact Support form (this repo's `contact-relay` + `flow.html`, verified in
+`contact-relay/app.py`, fail-closed) and the authentik login / signup / password-reset / OTP flows
+(authentik's native **Captcha stage**).
+
+Set these in `.env` (see `.env.example`):
+
+- `RECAPTCHA_SITE_KEY` — public, ships in served HTML (real value is committed in `.env.example`).
+- `RECAPTCHA_SECRET_KEY` — **server-side only, never commit**; keep the real value only in `.env`.
+- `RECAPTCHA_MIN_SCORE` — reject below this score (default `0.5`).
+
+On deploy (NAS/Docker), provide these as environment variables to the `contact-relay` container —
+via the gitignored `.env` alongside `docker-compose.yml`, exactly like the other secrets. Register
+the pair as **v3** (a "Invalid key type" browser error means it's a v2 key). Full setup, the
+authentik Captcha-stage configuration, and a note to **rotate the secret** (it was shared in
+cleartext during setup) are in
+[`docs/authentik-manual.md`](docs/authentik-manual.md) → "Bot protection (reCAPTCHA v3)".
+
 ## Phase Overview
 
 | Phase | Focus |

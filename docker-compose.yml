@@ -165,6 +165,13 @@ services:
       CONTACT_EMAIL__FROM: ${CONTACT_EMAIL__FROM:-contact@example.com}
       CONTACT_RATE_LIMIT_MAX: ${CONTACT_RATE_LIMIT_MAX:-5}
       CONTACT_RATE_LIMIT_WINDOW_SECONDS: ${CONTACT_RATE_LIMIT_WINDOW_SECONDS:-3600}
+      # Google reCAPTCHA v3 for the contact form. SITE key is public; SECRET
+      # key is server-side only (never in served HTML, never committed). Left
+      # blank -> the relay logs a warning and skips verification (dev only).
+      # See docs/authentik-manual.md, "Bot protection (reCAPTCHA v3)".
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      RECAPTCHA_MIN_SCORE: ${RECAPTCHA_MIN_SCORE:-0.5}
     ports:
       - "${SSO_BIND_HOST:-0.0.0.0}:${CONTACT_RELAY_PORT:-9001}:8080"
     healthcheck:
