@@ -457,6 +457,79 @@ no generic "send arbitrary email" endpoint it's safe to expose to unauthenticate
    replying goes to the visitor's address (via `Reply-To`), confirm a 6th rapid submission gets
    rate-limited.
 
+## Bot protection (reCAPTCHA v3)
+
+Google reCAPTCHA **v3** (invisible/scored — no "click the traffic lights" widget) guards the
+public, unauthenticated entry points against bot/credential-stuffing abuse. There are two distinct
+integration points because two different codebases serve the forms:
+
+| Form | Served by | reCAPTCHA action | Where verification happens |
+|------|-----------|------------------|----------------------------|
+| Contact Support | this repo (`contact-relay/` + `flow.html`) | `contact` | `contact-relay/app.py`, `verify_recaptcha()` |
+| Login | authentik flow | `login` | authentik **Captcha stage** (native) |
+| Signup / enrollment | authentik flow | `signup` | authentik **Captcha stage** (native) |
+| Password reset (recovery) | authentik flow | `password_reset` | authentik **Captcha stage** (native) |
+| Email OTP / one-time code | authentik flow | `otp` | authentik **Captcha stage** (native) |
+
+### Keys and env
+
+Three env vars (see `.env.example`), read from `.env`:
+
+- `RECAPTCHA_SITE_KEY` — **public**; ships in served HTML/JS. Real value is committed in
+  `.env.example`.
+- `RECAPTCHA_SECRET_KEY` — **server-side only**; never in served HTML, never committed. Real value
+  lives only in the gitignored `.env`.
+- `RECAPTCHA_MIN_SCORE` — reject verifications scoring below this (default `0.5`; `0.0` = bot,
+  `1.0` = human).
+
+> **Register the key pair as reCAPTCHA v3.** If the browser console shows **"Invalid key type"**
+> from `grecaptcha.execute`, the key was registered as **v2**, not v3 — re-create it as v3 at
+> <https://www.google.com/recaptcha/admin>. Add both `sso.systemsnotsilos.com` and `localhost` to
+> the key's allowed domains.
+
+### Contact Support form (this repo's code)
+
+Already wired — nothing to configure in authentik:
+
+- Frontend (`authentik-custom-templates/if/flow.html`) fetches the public site key from the relay's
+  `/config` endpoint, loads `api.js?render=SITE_KEY`, and on submit calls
+  `grecaptcha.execute(SITE_KEY, {action: 'contact'})`, sending the token as `g-recaptcha-response`.
+- Backend (`contact-relay/app.py`, `verify_recaptcha()`) POSTs to Google's `siteverify`, and
+  requires: `success === true`, `action === "contact"`, `hostname` ending in `systemsnotsilos.com`
+  (or `localhost`/`127.0.0.1` in dev), and `score >= RECAPTCHA_MIN_SCORE`. It **fails closed** on any
+  verification failure or network error. If the keys are unset it **skips** verification and logs a
+  warning (so local dev isn't broken). The secret and token are never logged.
+
+Set `RECAPTCHA_SITE_KEY` / `RECAPTCHA_SECRET_KEY` in `.env`; docker-compose passes them to the
+`contact-relay` container.
+
+### authentik flows (login / signup / password reset / OTP)
+
+authentik's flow forms are served and verified by authentik itself — this repo can't inject a custom
+verify helper into that pipeline. Use authentik's **native Captcha stage**, which performs the
+server-side `siteverify` (score-based) for you:
+
+1. **Admin interface → Flows & Stages → Stages → Create → Captcha Stage.**
+2. Configure:
+   - **Public Key** = `RECAPTCHA_SITE_KEY`, **Private Key** = `RECAPTCHA_SECRET_KEY` (copy the real
+     values from `.env`).
+   - **JS URL** = `https://www.google.com/recaptcha/api.js`
+   - **API URL** = `https://www.google.com/recaptcha/api/siteverify`
+   - **Score minimum** = `0.5` (keep in sync with `RECAPTCHA_MIN_SCORE`), **Score maximum** = `1.0`.
+   - **Interactive** = **off** (v3 is invisible/scored; leaving it on forces a v2-style checkbox).
+3. **Bind the stage** into each target flow (Flows → the flow → **Stage Bindings → Bind existing
+   stage**), ordered before the identification/password stage:
+   - default **authentication** flow (`login` intent)
+   - default **enrollment** flow (`signup`)
+   - default **recovery** flow (`password_reset`)
+   - the flow containing your **Email OTP / one-time-code** stage (`otp`)
+4. Because the stage runs inside the flow, it fails closed by construction: a low score / failed
+   verification stops the flow and the user cannot proceed.
+
+> The per-form action names in the table above are the logical actions for this integration. The
+> authentik Captcha stage manages its own action string internally; the score threshold and
+> fail-closed behavior are the parts that matter and are configured above.
+
 ## Creating an API Token for Automation
 
 For scripted/read-only checks against a live instance (e.g. `scripts/check-app-access.sh`)
