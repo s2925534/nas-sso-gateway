@@ -166,16 +166,21 @@
 </div>
 <script data-id="sns-contact-form">
 (function () {
-  // EDIT ME per deployment: the contact-relay service's public endpoint. Not
-  // derivable from this template (routing is external, see ADR-003) -- point
-  // this at wherever your reverse proxy/tunnel exposes the contact-relay
-  // service (see CONTACT_RELAY_PORT in .env.example).
-  var RELAY_ENDPOINT = "/contact-api/send";
-  // Same relay service, sibling route. Returns { recaptcha_site_key } -- the
-  // PUBLIC reCAPTCHA v3 site key, injected from the relay's server-side config
-  // so the key lives in exactly one place (the relay's env), not hardcoded
-  // here. Derived from RELAY_ENDPOINT so both track the same base path.
-  var CONFIG_ENDPOINT = RELAY_ENDPOINT.replace(/\/send$/, "/config");
+  // The login-page contact form now posts to the shared ecosystem-services
+  // hub's /api/contact (the standalone contact-relay service was retired and
+  // folded into the hub). These are cross-origin from the login page
+  // (sso.systemsnotsilos.com -> services.systemsnotsilos.com); the hub's CORS
+  // allowlist plus the site API key below authorize this origin.
+  var CONTACT_ENDPOINT = "https://services.systemsnotsilos.com/api/contact";
+  // Sibling route on the hub. Returns { siteKey } -- the PUBLIC reCAPTCHA v3
+  // site key for the hosted site, injected from the hub's server-side config.
+  var CONFIG_ENDPOINT = "https://services.systemsnotsilos.com/api/recaptcha-config";
+  // EDIT ME per deployment: the hub site API key for the `systemsnotsilos-sso`
+  // site (see the hub's sites.json). Public by design -- it scopes and
+  // rate-limits this origin; it is not a secret (it ships in this page's
+  // client JS). The real value lives in the hub's .env as
+  // SITE_API_KEY__SYSTEMSNOTSILOS_SSO and is substituted in at deploy time.
+  var HUB_API_KEY = "REPLACE_WITH_SITE_API_KEY__SYSTEMSNOTSILOS_SSO";
   var RECAPTCHA_ACTION = "contact";
 
   var recaptchaSiteKey = null; // populated from CONFIG_ENDPOINT; null => skip
@@ -186,7 +191,7 @@
   fetch(CONFIG_ENDPOINT)
     .then(function (res) { return res.ok ? res.json() : null; })
     .then(function (cfg) {
-      var key = cfg && cfg.recaptcha_site_key;
+      var key = cfg && cfg.siteKey;
       if (!key) return; // reCAPTCHA not configured (e.g. local dev) -> skip
       recaptchaSiteKey = key;
       var s = document.createElement("script");
@@ -262,16 +267,25 @@
 
     getRecaptchaToken().then(function (token) {
     var payload = {
-      email: document.getElementById("sns-contact-email").value,
-      body: document.getElementById("sns-contact-body").value,
-      // reCAPTCHA v3 token (empty when reCAPTCHA is not configured). The relay
+      senderEmail: document.getElementById("sns-contact-email").value,
+      // A preset subject the hub accepts (see its subject-options.js). "access"
+      // = "Account / access issue", the natural category for a login page.
+      subject: "access",
+      message: document.getElementById("sns-contact-body").value,
+      // Honeypot: real users never fill this in; the hub fake-succeeds (sends
+      // nothing) if it is set. Sent empty from the real form.
+      website: "",
+      // reCAPTCHA v3 token (empty when reCAPTCHA is not configured). The hub
       // verifies it server-side and fails closed when it is enabled.
-      "g-recaptcha-response": token,
+      recaptchaToken: token,
     };
 
-    fetch(RELAY_ENDPOINT, {
+    fetch(CONTACT_ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + HUB_API_KEY,
+      },
       body: JSON.stringify(payload),
     })
       .then(function (res) {
@@ -285,7 +299,11 @@
           form.reset();
           setTimeout(function () { toggleForm(false); }, 2000);
         } else {
-          status.textContent = (result.data && result.data.error) || "Failed to send message.";
+          status.textContent =
+            (result.data && result.data.details && result.data.details[0]) ||
+            (result.data && result.data.message) ||
+            (result.data && result.data.error) ||
+            "Failed to send message.";
         }
       })
       .catch(function () {

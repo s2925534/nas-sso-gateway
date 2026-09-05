@@ -141,48 +141,11 @@ services:
       - sso-internal
     # No `ports:` — the worker has no web UI of its own.
 
-  contact-relay:
-    # Bespoke code (contact-relay/), built and published by this repo's own
-    # CI to GHCR -- see docs/deployer-integration.md. Unlike authentik above
-    # (a pinned third-party image, see ADR-010), this one tracks `latest` and
-    # is Watchtower-managed, matching the convention used for this project's
-    # own code elsewhere in this ecosystem.
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-s2925534}/nas-sso-gateway-contact-relay:${CONTACT_RELAY_TAG:-latest}
-    container_name: sso-contact-relay
-    restart: unless-stopped
-    environment:
-      CONTACT_ADMIN_EMAIL: ${CONTACT_ADMIN_EMAIL:?CONTACT_ADMIN_EMAIL must be set in .env}
-      CONTACT_ALLOWED_ORIGIN: ${CONTACT_ALLOWED_ORIGIN:?CONTACT_ALLOWED_ORIGIN must be set in .env (the login page's real origin, for CORS)}
-      # Separate SMTP config from AUTHENTIK_EMAIL__* on purpose -- this is a
-      # different sender identity, and keeping them independent means
-      # rotating one relay's credentials never silently breaks the other.
-      CONTACT_EMAIL__HOST: ${CONTACT_EMAIL__HOST:-}
-      CONTACT_EMAIL__PORT: ${CONTACT_EMAIL__PORT:-587}
-      CONTACT_EMAIL__USERNAME: ${CONTACT_EMAIL__USERNAME:-}
-      CONTACT_EMAIL__PASSWORD: ${CONTACT_EMAIL__PASSWORD:-}
-      CONTACT_EMAIL__USE_TLS: ${CONTACT_EMAIL__USE_TLS:-true}
-      CONTACT_EMAIL__USE_SSL: ${CONTACT_EMAIL__USE_SSL:-false}
-      CONTACT_EMAIL__FROM: ${CONTACT_EMAIL__FROM:-contact@example.com}
-      CONTACT_RATE_LIMIT_MAX: ${CONTACT_RATE_LIMIT_MAX:-5}
-      CONTACT_RATE_LIMIT_WINDOW_SECONDS: ${CONTACT_RATE_LIMIT_WINDOW_SECONDS:-3600}
-      # Google reCAPTCHA v3 for the contact form. SITE key is public; SECRET
-      # key is server-side only (never in served HTML, never committed). Left
-      # blank -> the relay logs a warning and skips verification (dev only).
-      # See docs/authentik-manual.md, "Bot protection (reCAPTCHA v3)".
-      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
-      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
-      RECAPTCHA_MIN_SCORE: ${RECAPTCHA_MIN_SCORE:-0.5}
-    ports:
-      - "${SSO_BIND_HOST:-0.0.0.0}:${CONTACT_RELAY_PORT:-9001}:8080"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - sso-internal
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
+  # NOTE: the `contact-relay` service was retired 2026-09-05. Its function (the
+  # login-page "Contact Support" form) was folded into the shared
+  # ecosystem-services hub's /api/contact; the login page (authentik-custom-
+  # templates/if/flow.html) now posts there directly. See that repo's
+  # sites.json `systemsnotsilos-sso` entry.
 
 networks:
   sso-internal:
