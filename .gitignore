@@ -35,3 +35,6 @@ __pycache__/
 
 # Generated TODO ledger view (local convenience artifact)
 TODO.html
+
+# Verbatim journal index: machine-local transcript paths, not portable
+/agent-context/journal-verbatim/
