@@ -171,10 +171,10 @@
   // folded into the hub). These are cross-origin from the login page
   // (sso.systemsnotsilos.com -> services.systemsnotsilos.com); the hub's CORS
   // allowlist plus the site API key below authorize this origin.
-  var CONTACT_ENDPOINT = "https://services.systemsnotsilos.com/api/contact";
+  var CONTACT_ENDPOINT = "https://velosolabs.com/api/contact";
   // Sibling route on the hub. Returns { siteKey } -- the PUBLIC reCAPTCHA v3
   // site key for the hosted site, injected from the hub's server-side config.
-  var CONFIG_ENDPOINT = "https://services.systemsnotsilos.com/api/recaptcha-config";
+  var CONFIG_ENDPOINT = "https://velosolabs.com/api/recaptcha-config";
   // EDIT ME per deployment: the hub site API key for the `systemsnotsilos-sso`
   // site (see the hub's sites.json). Public by design -- it scopes and
   // rate-limits this origin; it is not a secret (it ships in this page's
